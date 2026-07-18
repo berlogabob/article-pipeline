@@ -1,0 +1,31 @@
+[project]
+name = "article-pipeline"
+version = "0.1.0"
+description = "Article processor: URL inbox -> local LLM (ollama/oMLX/claude/codex) -> Logseq markdown or TyLog Typst notes"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "trafilatura>=0.10.0",
+    "beautifulsoup4>=4.12.0",
+    "httpx>=0.27.0",
+    "watchdog>=4.0.0",
+    "pydantic>=2.0.0",
+    "requests>=2.31.0",
+    "youtube-transcript-api>=0.6.0",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+article-pipeline = "article_pipeline.main:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/article_pipeline"]

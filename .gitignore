@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+config.yaml
+01_inbox/*
+02_processing/*
+03_success/*
+04_failed/*
+!*/.gitkeep

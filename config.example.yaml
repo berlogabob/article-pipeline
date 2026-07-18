@@ -1,0 +1,62 @@
+# article-pipeline defaults. Copy is NOT needed: first run launches a wizard
+# that writes config.yaml (gitignored) with your engine/model/format answers.
+
+engine:
+  provider: null          # ollama | omlx | claude | codex  (set by wizard)
+  base_url: null          # filled for http engines; null for cli engines
+  primary_model: null
+  fallback_model: null    # optional; null disables fallback
+  # NOTE: no api keys are stored here. The oMLX key is read live from
+  # ~/.omlx/settings.json (auth.api_key) on every run.
+
+output_format: null       # markdown | typst  (set by wizard)
+
+max_retries: 3
+warmup_llm: true
+
+rate_limit:
+  delay_per_domain: 2
+  delay_global: 1
+
+content:
+  min_length: 100
+  max_length: 8000
+
+http:
+  retry_429_count: 3
+  retry_429_backoff_seconds: 1.0
+
+llm:
+  timeout_seconds: 120
+  max_parallel_jobs: 1
+  temperature_attempts: [0.05, 0.25, 0.50]
+
+output:
+  max_filename_chars: 60   # Nextcloud-safe: short names, no emoji
+
+folders:                   # data stages, relative to project root
+  inbox: 01_inbox
+  processing: 02_processing
+  success: 03_success
+  failed: 04_failed
+
+markdown:
+  out_dir: ~/Nextcloud/Notes/articles
+
+typst:
+  vault_dir: ~/Nextcloud/TyLogVault
+  articles_subdir: articles
+  assets_subdir: assets/articles
+  download_images: true
+  max_images_per_article: 8
+  max_image_bytes: 8388608
+  related_articles:
+    enabled: true
+    max_links: 5
+    max_vault_files_scanned: 5000
+
+logging:
+  level: INFO
+  folder: ~/.article-pipeline/logs
+  retention_days: 7
+  console: true
