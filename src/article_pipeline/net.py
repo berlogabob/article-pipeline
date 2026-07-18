@@ -13,7 +13,7 @@ import time
 import unicodedata
 from ipaddress import ip_address
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TypedDict
 from urllib.parse import parse_qs, unquote, urljoin, urlparse
 
 import requests
@@ -76,6 +76,83 @@ def extract_url_from_text(text: str) -> Optional[str]:
         if len(url) > 10:
             return url
     return None
+
+
+class ExtractedLink(TypedDict):
+    url: str
+    title: str
+
+
+_MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)")
+_URL_RE = re.compile(r"https?://[^\s<>\"'\)]+")
+_LIST_PREFIX_RE = re.compile(r"^\s*(?:[-*+]\s+|\d+[.)]\s*)")
+
+
+def _clean_extracted_url(url: str) -> str:
+    return url.rstrip(".,;:!?")
+
+
+def _clean_link_title(title: str) -> str:
+    title = re.sub(r"\s+", " ", title).strip()
+    title = _LIST_PREFIX_RE.sub("", title).strip()
+    return title.strip(" -:\t")
+
+
+def _line_for_span(text: str, start: int, end: int) -> str:
+    line_start = text.rfind("\n", 0, start) + 1
+    line_end = text.find("\n", end)
+    if line_end == -1:
+        line_end = len(text)
+    return text[line_start:line_end]
+
+
+def _fallback_title_for_url(url: str, fallback_title: str = "") -> str:
+    parsed = urlparse(url)
+    path_name = Path(parsed.path.rstrip("/")).name
+    if path_name:
+        return unquote(path_name)
+    domain = get_domain(url)
+    if domain:
+        return domain
+    return fallback_title.strip() or "Article"
+
+
+def extract_links_from_markdown(text: str, fallback_title: str = "") -> list[ExtractedLink]:
+    links: list[ExtractedLink] = []
+    seen: set[str] = set()
+    markdown_spans: list[tuple[int, int]] = []
+    candidates: list[tuple[int, str, str]] = []
+
+    def add_link(url: str, title: str):
+        cleaned_url = _clean_extracted_url(url)
+        if not cleaned_url:
+            return
+        normalized = normalize_url(cleaned_url)
+        if normalized in seen:
+            return
+        seen.add(normalized)
+        cleaned_title = _clean_link_title(title) or _fallback_title_for_url(
+            cleaned_url, fallback_title
+        )
+        links.append({"url": cleaned_url, "title": cleaned_title})
+
+    for match in _MARKDOWN_LINK_RE.finditer(text):
+        markdown_spans.append(match.span(2))
+        candidates.append((match.start(), match.group(2), match.group(1)))
+
+    for match in _URL_RE.finditer(text):
+        start, end = match.span()
+        if any(span_start <= start < span_end for span_start, span_end in markdown_spans):
+            continue
+        url = _clean_extracted_url(match.group(0))
+        line = _line_for_span(text, start, end)
+        title = _clean_link_title(line.replace(match.group(0), ""))
+        candidates.append((start, url, title))
+
+    for _, url, title in sorted(candidates, key=lambda item: item[0]):
+        add_link(url, title)
+
+    return links
 
 
 def is_processed(path: Path) -> bool:

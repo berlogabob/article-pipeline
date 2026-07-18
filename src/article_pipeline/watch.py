@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 
 from .config import Config
 from .errors import ProcessingError, validate_url
-from .net import count_non_empty_lines, extract_url_from_text, move_to_folder
+from .net import count_non_empty_lines, extract_links_from_markdown, move_to_folder
 from .processor import process_article
 
 logger = logging.getLogger("article_pipeline")
@@ -80,19 +80,21 @@ def process_inbox_file(path: Path, root: Path, cfg: Config, engine, force: bool 
             if count_non_empty_lines(path) == 0:
                 move_to_folder(path, failed_dir, _error_suffix(ProcessingError.EMPTY_CONTENT))
                 return False
-            url = extract_url_from_text(path.read_text(encoding="utf-8", errors="ignore"))
-            if not url:
+            content = path.read_text(encoding="utf-8", errors="ignore")
+            links = extract_links_from_markdown(content, fallback_title=path.stem)
+            if not links:
                 move_to_folder(path, failed_dir, _error_suffix(ProcessingError.NO_URL_FOUND))
                 return False
-            start = time.time()
-            success, err = process_article(url, path.stem, cfg, engine, force=force)
-            if success:
-                logger.info("OK %s (%.1fs)", path.name, time.time() - start)
-                move_to_folder(path, success_dir)
-            else:
-                logger.info("FAILED %s - %s", path.name, err.value)
-                move_to_folder(path, failed_dir, _error_suffix(err))
-            return success
+            ok = 0
+            for link in links:
+                url = link["url"]
+                title = link["title"]
+                success, err = process_article(url, title, cfg, engine, force=force)
+                ok += 1 if success else 0
+                logger.info("[md %d/%d] %s -> %s", ok, len(links), url[:60],
+                            "ok" if success else err.value)
+            move_to_folder(path, success_dir if ok else failed_dir)
+            return ok > 0
 
         logger.info("Unsupported file type, moving to failed: %s", path.name)
         move_to_folder(path, failed_dir, _error_suffix(ProcessingError.UNKNOWN))

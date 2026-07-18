@@ -214,7 +214,7 @@ def render_typst_note(
     ]
 
     guidance = (metadata.step_by_step_guidance or "").strip()
-    if guidance and guidance != FALLBACK_GUIDANCE:
+    if metadata.is_tutorial and guidance and guidance != FALLBACK_GUIDANCE:
         parts += ["== Guidance", "", escape_markup(guidance), ""]
 
     if metadata.verification_notes.strip():

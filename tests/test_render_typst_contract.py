@@ -17,6 +17,7 @@ def _meta(**overrides):
         tags=["ai", "python"],
         author="Jane Doe",
         verification_notes="Проверено",
+        is_tutorial=True,
         step_by_step_guidance="1. Шаг",
     )
     base.update(overrides)

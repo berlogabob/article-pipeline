@@ -3,9 +3,22 @@
 Merge of `logseq-processor` (ollama) + `link_pro/logseq-processor` (oMLX) into one
 engine-agnostic pipeline. Each phase has a measurable check.
 
-## Phase 0 — Harvest restored oMLX variant (non-blocking)
-- [ ] `~/Nextcloud/scripts/link_pro/logseq-processor` restored from Nextcloud trash
-- [ ] `migration_ollama_to_oxml.md` read; useful deltas folded in / logged here
+## Phase 0 — Harvest restored oMLX variant — DONE 2026-07-18
+- [x] `~/Nextcloud/scripts/link_pro/logseq-processor` restored from Nextcloud trash
+- [x] `migration_ollama_to_oxml.md` read (early transformers-based plan, superseded by
+      the HTTP `omlx_client.py` — same OpenAI-compatible approach we already built)
+- [x] Deltas folded in:
+  - robust JSON extraction (raw_decode scan, prefers object with metadata keys) → `stage2_summarize.extract_json_object`
+  - `OMLX_API_KEY` env override + `max_tokens` cap → `engine.py`
+  - refined strict-JSON Russian prompt + `is_tutorial` field, guidance gated on it → `metadata.py`, both renderers
+  - newest markdown contract: YAML frontmatter (Obsidian-style) → `stage3_render_markdown.py`
+  - `normalize_tags` (strips #, [[ ]], dedupes) → `metadata.py`
+  - multi-link markdown files, link text as title → `net.extract_links_from_markdown`, `watch.py`
+  - resolved HTML titles + canonical URLs + Instagram/HuggingFace metadata fallbacks → `html_parser.py`, `stage1_ingest.py`
+  - full YouTube subsystem: transcript API → yt-dlp → ASR chain, playlists/channels,
+    homepage rejection, per-video child notes linked to the course note → `youtube.py`, `processor.py`
+  - NOT ported (deliberately): SQLite pipeline queue + heartbeat (folder stages cover it),
+    `mlx_client.py` transformers path (abandoned in the restored repo itself)
 
 ## Phase 1 — Scaffold + config wizard
 - [x] `uv sync` succeeds; `uv run article-pipeline --help` works

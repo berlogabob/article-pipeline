@@ -6,6 +6,7 @@ Both flavors expose the same interface:
 """
 
 import json
+import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -48,11 +49,15 @@ class HttpEngine:
             data = resp.json()
             return [m["id"] for m in data["data"]]
 
-    def chat_json(self, prompt: str, model: str, temperature: float) -> str:
+    def chat_json(
+        self, prompt: str, model: str, temperature: float, max_tokens: int = 2048
+    ) -> str:
+        # max_tokens caps runaway generation (oMLX's server default is 65k)
         payload = {
             "model": model,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": temperature,
+            "max_tokens": max_tokens,
             "response_format": {"type": "json_object"},
         }
         with self._client() as client:
@@ -85,6 +90,11 @@ class CliEngine:
         return list(CODEX_MODELS)
 
     def chat_json(self, prompt: str, model: str, temperature: float) -> str:
+        # "/no_think" is a hint for local Qwen-style models; CLI agents don't
+        # need it, and claude CLI would parse a leading "/" as a slash command.
+        stripped = prompt.lstrip()
+        if stripped.startswith("/no_think"):
+            prompt = stripped[len("/no_think"):].lstrip("\n")
         if self.provider == "claude":
             return self._chat_claude(prompt, model)
         return self._chat_codex(prompt, model)
@@ -133,7 +143,10 @@ class CliEngine:
 
 
 def read_omlx_api_key() -> str:
-    """Read the oMLX API key from ~/.omlx/settings.json (auth.api_key)."""
+    """Read the oMLX API key from $OMLX_API_KEY or ~/.omlx/settings.json (auth.api_key)."""
+    env_key = os.getenv("OMLX_API_KEY", "").strip()
+    if env_key:
+        return env_key
     if not OMLX_SETTINGS_PATH.exists():
         raise RuntimeError(
             f"oMLX settings not found at {OMLX_SETTINGS_PATH}. "

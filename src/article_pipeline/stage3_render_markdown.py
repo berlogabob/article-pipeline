@@ -1,43 +1,56 @@
+"""Render an article as an Obsidian/Logseq markdown note with YAML frontmatter.
+
+Format ported from the restored oMLX variant (its newest markdown contract):
+YAML frontmatter + `# title` + ## Summary / ## Step-by-step guidance /
+## Verification sections + full extracted text.
+"""
+
 from datetime import datetime
 from typing import Optional
+from urllib.parse import urlparse
 
-from article_pipeline.metadata import ArticleMetadata, FALLBACK_GUIDANCE
+import yaml
+
+from .metadata import ArticleMetadata, FALLBACK_GUIDANCE, normalize_tags
 
 
-def build_props(
+def source_url_for_domain(source: Optional[str], url: str) -> str:
+    domain = source or urlparse(url).netloc.lower().removeprefix("www.")
+    if not domain:
+        return url
+    return f"https://{domain}"
+
+
+def build_frontmatter(
     title: str,
     url: str,
-    res: ArticleMetadata,
+    metadata: ArticleMetadata,
     source: Optional[str] = None,
     journal_day: Optional[str] = None,
 ) -> str:
-    lines = [f"title:: {title}"]
-
-    if res.tags:
-        lines.append(f"tags:: {' '.join(f'[[{t}]]' for t in res.tags)}")
-
     now = datetime.now().strftime("%Y-%m-%d")
-    if not journal_day:
-        journal_day = now
-
-    lines.extend(
-        [
-            "type:: article",
-            f"journal-day:: [[{journal_day}]]",
-            "status:: processed",
-            f"processed:: {now}",
-            f"created:: {now}",
-            f"url:: {url}",
-        ]
-    )
-
-    if source:
-        lines.append(f"source:: [[{source.strip()}]]")
-
-    if res.author:
-        lines.append(f"author:: {res.author}")
-
-    return "\n".join(lines) + "\n\n"
+    frontmatter = {
+        "title": title,
+        "aliases": [],
+        "tags": normalize_tags(metadata.tags),
+        "type": "article",
+        "journal_day": journal_day or now,
+        "status": "processed",
+        "read_status": "unread",
+        "processed": now,
+        "created": now,
+        "url": url,
+        "source": source,
+        "source_url": source_url_for_domain(source, url),
+        "author": metadata.author,
+    }
+    yaml_text = yaml.safe_dump(
+        frontmatter,
+        allow_unicode=True,
+        sort_keys=False,
+        default_flow_style=False,
+    ).strip()
+    return f"---\n{yaml_text}\n---\n\n"
 
 
 def build_content(
@@ -46,38 +59,26 @@ def build_content(
     metadata: ArticleMetadata,
     extracted_text: str,
     is_youtube: bool = False,
-    max_len: int = 8000,
+    source: Optional[str] = None,
+    max_len: Optional[int] = None,  # accepted for call compatibility; full text is kept
 ) -> str:
-    source = "youtube" if is_youtube else None
-    props = build_props(title, url, metadata, source=source)
-
-    source_label = " (по видео)" if is_youtube else ""
-
-    text_preview = (
-        extracted_text.strip()
-        if len(extracted_text) < max_len
-        else extracted_text[:max_len] + "\n... (полный текст ниже)"
-    )
+    if source is None and is_youtube:
+        source = "youtube"
+    frontmatter = build_frontmatter(title, url, metadata, source=source)
 
     guidance = (metadata.step_by_step_guidance or "").strip()
-    show_guidance = bool(guidance and guidance != FALLBACK_GUIDANCE)
+    show_guidance = bool(metadata.is_tutorial and guidance and guidance != FALLBACK_GUIDANCE)
+    guidance_block = f"\n## Step-by-step guidance\n{guidance}\n" if show_guidance else ""
 
-    guidance_block = ""
-    if show_guidance:
-        guidance_block = f"""
-**Шаг за шагом руководство**{source_label}
-{guidance}
-"""
+    return f"""{frontmatter}# {title}
 
-    content = f"""{props}
-**Summary**
+## Summary
 {metadata.summary_ru.strip()}
-
 {guidance_block}
-**Достоверность**
+## Verification
 {metadata.verification_notes.strip()}
 
 ---
-{text_preview}
+
+{extracted_text.strip()}
 """
-    return content

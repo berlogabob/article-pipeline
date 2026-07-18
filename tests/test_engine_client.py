@@ -201,3 +201,27 @@ def test_read_omlx_api_key_success(monkeypatch, tmp_path):
     settings_path.write_text('{"auth": {"api_key": "sk-test-123"}}')
     monkeypatch.setattr(engine, "OMLX_SETTINGS_PATH", settings_path)
     assert read_omlx_api_key() == "sk-test-123"
+
+
+def test_cli_engine_strips_no_think_prefix(monkeypatch):
+    """claude CLI parses a leading '/' as a slash command; /no_think must be stripped."""
+    from article_pipeline import engine as engine_mod
+
+    captured = {}
+
+    def fake_run(cmd, **kwargs):
+        captured["cmd"] = cmd
+
+        class R:
+            returncode = 0
+            stdout = '{"ok": true}'
+            stderr = ""
+
+        return R()
+
+    monkeypatch.setattr(engine_mod.subprocess, "run", fake_run)
+    e = engine_mod.CliEngine("claude", timeout_seconds=5)
+    e.chat_json("/no_think\nActual prompt text", "sonnet", 0.1)
+    sent_prompt = next(a for a in captured["cmd"] if "Actual prompt" in a)
+    assert not sent_prompt.lstrip().startswith("/")
+    assert "/no_think" not in sent_prompt

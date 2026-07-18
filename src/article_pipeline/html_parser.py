@@ -10,14 +10,16 @@ trafilatura.extract() now emits (include_images=True), so callers can
 download the article's images separately (see images.py).
 """
 
+import html as html_lib
 import logging
 import re
 import time
-from typing import List, Optional
+from typing import List, Optional, TypedDict
 from urllib.parse import urljoin, urlparse
 
 import requests
 import trafilatura
+from bs4 import BeautifulSoup
 
 from .rate_limit import DomainRateLimiter, get_rate_limiter
 
@@ -31,6 +33,12 @@ MAX_CONTENT_SIZE = 10 * 1024 * 1024
 _IMAGE_MD_RE = re.compile(
     r'!\[[^\]]*\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*"|\s+\'[^\']*\')?\s*\)'
 )
+
+
+class ExtractedArticle(TypedDict):
+    text: str
+    title: Optional[str]
+    canonical_url: Optional[str]
 
 
 def validate_url(url: str) -> bool:
@@ -168,3 +176,227 @@ def fetch_and_extract(
         )
         return None
     return extracted
+
+
+def extract_title_from_html(html: str) -> Optional[str]:
+    try:
+        metadata = trafilatura.extract_metadata(html)
+        title = getattr(metadata, "title", None) if metadata else None
+        if title:
+            return _clean_title(title)
+    except Exception as e:
+        logger.debug("Trafilatura metadata title extraction failed: %s", e)
+
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+        for selector in (
+            ("meta", {"property": "og:title"}),
+            ("meta", {"name": "twitter:title"}),
+        ):
+            tag = soup.find(*selector)
+            if tag and tag.get("content"):
+                return _clean_title(tag["content"])
+        if soup.title and soup.title.string:
+            return _clean_title(soup.title.string)
+    except Exception as e:
+        logger.debug("HTML title extraction failed: %s", e)
+    return None
+
+
+def extract_canonical_url_from_html(html: str) -> Optional[str]:
+    try:
+        metadata = trafilatura.extract_metadata(html)
+        metadata_url = getattr(metadata, "url", None) if metadata else None
+        if metadata_url and validate_url(metadata_url):
+            return metadata_url.strip()
+    except Exception as e:
+        logger.debug("Trafilatura metadata URL extraction failed: %s", e)
+
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+        for selector in (
+            ("meta", {"property": "og:url"}),
+            ("meta", {"name": "twitter:url"}),
+        ):
+            tag = soup.find(*selector)
+            if tag and tag.get("content") and validate_url(tag["content"]):
+                return tag["content"].strip()
+
+        canonical = soup.find(
+            "link", rel=lambda value: value and "canonical" in value
+        )
+        if canonical and canonical.get("href") and validate_url(canonical["href"]):
+            return canonical["href"].strip()
+    except Exception as e:
+        logger.debug("HTML canonical URL extraction failed: %s", e)
+    return None
+
+
+def _clean_title(title: str) -> str:
+    return " ".join(title.split()).strip()
+
+
+def fetch_and_extract_article(
+    url: str,
+    timeout: int = 15,
+    retry_429_count: int = 3,
+    retry_429_backoff_seconds: float = 1.0,
+    rate_limiter: Optional[DomainRateLimiter] = None,
+) -> Optional[ExtractedArticle]:
+    """Fetch `url` and extract text/title/canonical_url in one shot.
+
+    Builds on fetch_html()/extract_text_from_html() the same way
+    fetch_and_extract() does, but also resolves the page's resolved title and
+    canonical URL, and falls back to og:/twitter: metadata extraction for a
+    handful of sites trafilatura can't parse (see _metadata_fallback_article).
+    """
+    html = fetch_html(
+        url,
+        timeout=timeout,
+        retry_429_count=retry_429_count,
+        retry_429_backoff_seconds=retry_429_backoff_seconds,
+        rate_limiter=rate_limiter,
+    )
+    if not html:
+        return None
+
+    text = extract_text_from_html(html, include_images=True)
+    title = extract_title_from_html(html)
+    canonical_url = extract_canonical_url_from_html(html)
+    if text is None:
+        fallback_article = _metadata_fallback_article(
+            url,
+            html,
+            title=title,
+            canonical_url=canonical_url,
+        )
+        if fallback_article:
+            return fallback_article
+        return None
+    return {
+        "text": text,
+        "title": title,
+        "canonical_url": canonical_url,
+    }
+
+
+def _metadata_fallback_article(
+    url: str,
+    html: str,
+    *,
+    title: Optional[str],
+    canonical_url: Optional[str],
+) -> Optional[ExtractedArticle]:
+    parsed = urlparse(url)
+    host = parsed.netloc.lower().removeprefix("www.")
+    if host not in {"instagram.com", "huggingface.co"}:
+        return None
+
+    soup = BeautifulSoup(html, "html.parser")
+    if host == "huggingface.co":
+        return _huggingface_metadata_article(url, soup, title, canonical_url)
+
+    og_title = _meta_content(soup, "og:title")
+    og_description = _meta_content(soup, "og:description")
+    twitter_title = _meta_content(soup, "twitter:title")
+    og_image = _meta_content(soup, "og:image")
+    canonical = canonical_url or _meta_content(soup, "og:url") or url
+
+    caption = _instagram_caption(og_title) or _instagram_caption(og_description)
+    author = _instagram_author(og_title, twitter_title)
+    stats = _instagram_stats(og_description)
+
+    lines = ["Source: Instagram", f"URL: {canonical}"]
+    if author:
+        lines.append(f"Author: {author}")
+    if caption:
+        lines.extend(["", "Caption:", caption])
+    elif og_description:
+        lines.extend(["", "Description:", og_description.strip()])
+    if stats:
+        lines.append(f"Stats: {stats}")
+    if og_image:
+        lines.append(f"Image: {og_image}")
+
+    text = "\n".join(line for line in lines if line is not None).strip()
+    if len(text) < 10:
+        return None
+
+    fallback_title = twitter_title or title or og_title or "Instagram post"
+    logger.info("Using metadata fallback for Instagram: %s", url[:80])
+    return {
+        "text": text,
+        "title": _clean_title(fallback_title),
+        "canonical_url": canonical,
+    }
+
+
+def _huggingface_metadata_article(
+    url: str,
+    soup: BeautifulSoup,
+    title: Optional[str],
+    canonical_url: Optional[str],
+) -> Optional[ExtractedArticle]:
+    og_title = _meta_content(soup, "og:title")
+    og_description = _meta_content(soup, "og:description")
+    description = _meta_content(soup, "description")
+    canonical = canonical_url or _meta_content(soup, "og:url") or url
+    fallback_title = title or og_title or "Hugging Face"
+    body = og_description or description
+    if not body:
+        return None
+    text = "\n".join(
+        [
+            "Source: Hugging Face",
+            f"URL: {canonical}",
+            "",
+            "Description:",
+            body.strip(),
+        ]
+    )
+    logger.info("Using metadata fallback for Hugging Face: %s", url[:80])
+    return {
+        "text": text,
+        "title": _clean_title(fallback_title),
+        "canonical_url": canonical,
+    }
+
+
+def _meta_content(soup: BeautifulSoup, key: str) -> Optional[str]:
+    tag = soup.find("meta", {"property": key}) or soup.find("meta", {"name": key})
+    if tag and tag.get("content"):
+        return html_lib.unescape(str(tag["content"])).strip()
+    return None
+
+
+def _instagram_caption(*values: Optional[str]) -> str:
+    for value in values:
+        if not value:
+            continue
+        match = re.search(r':\s*"(?P<caption>.*)"\s*\.?\s*$', value, flags=re.S)
+        if match:
+            return match.group("caption").strip()
+    return ""
+
+
+def _instagram_author(og_title: Optional[str], twitter_title: Optional[str]) -> str:
+    if og_title:
+        match = re.match(r"(?P<author>.+?)\s+on Instagram:", og_title, flags=re.S)
+        if match:
+            return _clean_title(match.group("author"))
+    if twitter_title:
+        match = re.match(r"(?P<author>.+?)\s+\(@(?P<handle>[^)]+)\)", twitter_title)
+        if match:
+            return f"{_clean_title(match.group('author'))} (@{match.group('handle')})"
+    return ""
+
+
+def _instagram_stats(description: Optional[str]) -> str:
+    if not description:
+        return ""
+    match = re.match(
+        r"(?P<stats>[\d,.\s]+likes?,\s*[\d,.\s]+comments?)\s+-\s+",
+        description,
+        flags=re.I,
+    )
+    return _clean_title(match.group("stats")) if match else ""

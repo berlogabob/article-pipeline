@@ -2,8 +2,10 @@ import unittest
 from datetime import datetime as real_datetime
 from unittest.mock import patch
 
-from article_pipeline.metadata import ArticleMetadata
-from article_pipeline.stage3_render_markdown import build_content, build_props
+import yaml
+
+from article_pipeline.metadata import ArticleMetadata, normalize_tags
+from article_pipeline.stage3_render_markdown import build_content, build_frontmatter
 
 
 class _FixedDateTime:
@@ -12,60 +14,60 @@ class _FixedDateTime:
         return real_datetime(2024, 1, 31, 9, 15, 0)
 
 
+def _frontmatter(content: str) -> dict:
+    assert content.startswith("---\n")
+    raw = content.split("---", 2)[1]
+    return yaml.safe_load(raw)
+
+
 class MetadataMarkdownContractTests(unittest.TestCase):
-    def test_build_props_includes_required_logseq_fields_with_tags_and_author(self):
+    def test_build_frontmatter_includes_required_obsidian_fields(self):
         metadata = ArticleMetadata(
             summary_ru="Кратко",
-            tags=["ai", "python"],
+            tags=["#AI tools", "Google Drive", "PDF"],
             author="Jane Doe",
             verification_notes="Проверено по двум источникам",
-            step_by_step_guidance="1) Сделать A\n2) Сделать B",
+            is_tutorial=True,
+            step_by_step_guidance="1. Сделать A\n2. Сделать B",
         )
 
         with patch("article_pipeline.stage3_render_markdown.datetime", _FixedDateTime):
-            props = build_props(
+            frontmatter = build_frontmatter(
                 title="Sample Title",
                 url="https://example.com/article",
-                res=metadata,
+                metadata=metadata,
+                source="example.com",
                 journal_day="2024-01-30",
             )
 
-        self.assertIn("title:: Sample Title", props)
-        self.assertNotIn("alias::", props)
-        self.assertIn("type:: article", props)
-        self.assertIn("journal-day:: [[2024-01-30]]", props)
-        self.assertIn("processed:: 2024-01-31", props)
-        self.assertIn("created:: 2024-01-31", props)
-        self.assertIn("url:: https://example.com/article", props)
-        self.assertIn("tags:: [[ai]] [[python]]", props)
-        self.assertIn("author:: Jane Doe", props)
+        data = _frontmatter(frontmatter)
+        self.assertEqual(data["title"], "Sample Title")
+        self.assertEqual(data["aliases"], [])
+        self.assertEqual(data["type"], "article")
+        self.assertEqual(data["journal_day"], "2024-01-30")
+        self.assertEqual(data["status"], "processed")
+        self.assertEqual(data["read_status"], "unread")
+        self.assertEqual(data["processed"], "2024-01-31")
+        self.assertEqual(data["created"], "2024-01-31")
+        self.assertEqual(data["url"], "https://example.com/article")
+        self.assertEqual(data["source"], "example.com")
+        self.assertEqual(data["source_url"], "https://example.com")
+        self.assertEqual(data["author"], "Jane Doe")
+        self.assertEqual(data["tags"], ["AI-tools", "Google-Drive", "PDF"])
 
-    def test_build_props_omits_author_when_not_provided(self):
-        metadata = ArticleMetadata(
-            summary_ru="Кратко",
-            tags=["notes"],
-            author=None,
-            verification_notes="Проверено",
-            step_by_step_guidance="Шаги",
+    def test_normalize_tags_removes_hashes_spaces_and_duplicates(self):
+        self.assertEqual(
+            normalize_tags(["#обзоры техники", "Google Drive", "[[LLM]]", "LLM"]),
+            ["обзоры-техники", "Google-Drive", "LLM"],
         )
 
-        with patch("article_pipeline.stage3_render_markdown.datetime", _FixedDateTime):
-            props = build_props(
-                title="No Author",
-                url="https://example.com/no-author",
-                res=metadata,
-                journal_day="2024-01-31",
-            )
-
-        self.assertIn("tags:: [[notes]]", props)
-        self.assertNotIn("author::", props)
-
-    def test_build_content_contains_required_sections_and_properties(self):
+    def test_build_content_includes_tutorial_guidance_only_for_tutorials(self):
         metadata = ArticleMetadata(
             summary_ru="Итоговое краткое содержание",
             tags=["knowledge"],
             author=None,
             verification_notes="Проверено вручную",
+            is_tutorial=True,
             step_by_step_guidance="Шаг 1\nШаг 2",
         )
 
@@ -75,40 +77,58 @@ class MetadataMarkdownContractTests(unittest.TestCase):
                 url="https://example.com/contract",
                 metadata=metadata,
                 extracted_text="Original extracted text",
-                max_len=10_000,
+                source="example.com",
             )
 
-        self.assertIn("title:: Contract Test", content)
-        self.assertIn("type:: article", content)
-        self.assertIn("journal-day:: [[2024-01-31]]", content)
-        self.assertIn("processed:: 2024-01-31", content)
-        self.assertIn("created:: 2024-01-31", content)
-        self.assertIn("url:: https://example.com/contract", content)
+        data = _frontmatter(content)
+        self.assertEqual(data["read_status"], "unread")
+        self.assertIn("# Contract Test", content)
+        self.assertIn("## Summary", content)
+        self.assertIn("## Step-by-step guidance", content)
+        self.assertIn("Шаг 1", content)
+        self.assertIn("## Verification", content)
+        self.assertIn("Original extracted text", content)
 
-        self.assertIn("**Summary**", content)
-        self.assertIn("**Шаг за шагом руководство**", content)
-        self.assertIn("**Достоверность**", content)
-
-    def test_build_content_hides_fallback_guidance_placeholder(self):
+    def test_build_content_hides_guidance_for_non_tutorials(self):
         metadata = ArticleMetadata(
-            summary_ru="Fallback summary",
-            tags=["knowledge"],
+            summary_ru="Product announcement summary",
+            tags=["news"],
             author=None,
-            verification_notes="Fallback",
-            step_by_step_guidance="(не удалось извлечь)",
+            verification_notes="Средняя достоверность",
+            is_tutorial=False,
+            step_by_step_guidance="1. Не показывать",
         )
 
         with patch("article_pipeline.stage3_render_markdown.datetime", _FixedDateTime):
             content = build_content(
-                title="Fallback Contract Test",
-                url="https://example.com/fallback-contract",
+                title="Non Tutorial",
+                url="https://example.com/non-tutorial",
                 metadata=metadata,
                 extracted_text="Original extracted text",
-                max_len=10_000,
             )
 
-        self.assertNotIn("**Шаг за шагом руководство**", content)
-        self.assertIn("**Достоверность**", content)
+        self.assertNotIn("## Step-by-step guidance", content)
+        self.assertIn("## Verification", content)
+
+    def test_build_content_hides_empty_tutorial_guidance(self):
+        metadata = ArticleMetadata(
+            summary_ru="Tutorial without useful steps",
+            tags=["howto"],
+            author=None,
+            verification_notes="Проверено",
+            is_tutorial=True,
+            step_by_step_guidance="",
+        )
+
+        content = build_content(
+            title="Empty Guidance",
+            url="https://example.com/empty-guidance",
+            metadata=metadata,
+            extracted_text="Original extracted text",
+        )
+
+        self.assertNotIn("## Step-by-step guidance", content)
+        self.assertIn("## Verification", content)
 
 
 if __name__ == "__main__":
