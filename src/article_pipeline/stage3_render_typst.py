@@ -17,6 +17,13 @@ from .tag_scan import VaultNote
 # tylog_import_core escape set
 _ESCAPE_CHARS = set('\\#$*_`<>@[]~=-+/')
 
+# Owns the generated "== Related" block. TypstSeq's stripAutoRelated
+# (lib/app_mobile.dart) cuts from this marker line to end-of-file, so a
+# regenerated block replaces the old one instead of stacking a second
+# "== Related" heading underneath it. Must stay byte-identical to
+# _autoRelatedMarker on the Dart side, and must start its own line.
+AUTO_RELATED_MARKER = "// tylog:auto-related"
+
 
 def note_id(url: str) -> str:
     return "md-" + hashlib.sha256(url.encode("utf-8")).hexdigest()[:16]
@@ -188,9 +195,13 @@ def render_typst_note(
     if date is None:
         date = datetime.now().strftime("%Y-%m-%d")
 
+    # "status" carries the app's five-stage reading pipeline
+    # (unread|skimmed|read|extracted|cited) — see articleStatusStage in
+    # TypstSeq lib/widgets/property_select_chip.dart. A fresh import is
+    # "unread"; the old "processed" value only survived because the app folds
+    # it. There is no "read_status" — nothing in the app reads that key.
     properties: Dict = {
-        "status": "processed",
-        "read_status": "unread",
+        "status": "unread",
         "processed": date,
         "url": url,
         "source": "youtube" if is_youtube else (source or ""),
@@ -223,7 +234,9 @@ def render_typst_note(
     parts += ["#line(length: 100%)", "", markdown_to_typst(body_markdown, image_map)]
 
     if related:
-        parts += ["", "== Related", ""]
+        parts.append("")
+        parts.append(AUTO_RELATED_MARKER)
+        parts.append("== Related")
         for note in related:
             parts.append(
                 f"- #tylog.ref-note({_typst_string(note.id)})[{escape_markup(note.title)}]"

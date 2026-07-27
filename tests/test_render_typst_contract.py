@@ -106,10 +106,53 @@ def test_full_note_sections_and_related():
     assert "== Summary" in src
     assert "== Guidance" in src
     assert "== Verification" in src
-    assert "== Related" in src
-    assert '#tylog.ref-note("md-aaaa")[Other Note]' in src
     assert '"llm_provider": "ollama"' in src
     assert '"source": "example.com"' in src
+    # A fresh import enters the app's reading pipeline at "unread"; the app has
+    # no "read_status" key.
+    assert '"status": "unread"' in src
+    assert "read_status" not in src
+    # The Related block must be the exact shape TypstSeq's stripAutoRelated
+    # recognises: blank line, marker on its own line, heading, refs, trailing
+    # newline. Anything else makes "Relink vault" stack a second block.
+    assert src.endswith(
+        "\n\n// tylog:auto-related\n"
+        "== Related\n"
+        '- #tylog.ref-note("md-aaaa")[Other Note]\n'
+    )
+
+
+def test_related_block_is_replaceable_by_the_app_stripper():
+    """Port of TypstSeq's stripAutoRelated, so the two stay in lockstep."""
+    import re
+
+    from article_pipeline.stage3_render_typst import AUTO_RELATED_MARKER
+
+    def strip_auto_related(source: str) -> str:
+        m = re.search(f"(?:^|\n){re.escape(AUTO_RELATED_MARKER)}(?:\r?\n|$)", source)
+        if not m:
+            return source
+        return re.sub(r"[\r\n]+$", "", source[: m.start()])
+
+    _, with_block = render_typst_note(
+        title="T",
+        url="https://e.com",
+        metadata=_meta(),
+        body_markdown="Body.",
+        related=[VaultNote("md-aaaa", "Other Note", frozenset({"ai"}))],
+        date="2026-07-18",
+    )
+    _, without_block = render_typst_note(
+        title="T",
+        url="https://e.com",
+        metadata=_meta(),
+        body_markdown="Body.",
+        date="2026-07-18",
+    )
+    # Stripping the generated block returns the note the app would have
+    # re-appended onto — so a relink replaces it rather than duplicating it.
+    assert strip_auto_related(with_block) == without_block.rstrip("\n")
+    assert strip_auto_related(with_block).count("== Related") == 0
 
 
 def test_fallback_guidance_hidden():
