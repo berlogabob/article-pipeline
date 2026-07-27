@@ -3,12 +3,13 @@
 import logging
 import time
 from pathlib import Path
-from typing import Tuple
+from typing import List, Tuple
 
 from bs4 import BeautifulSoup
 
 from .config import Config
 from .errors import ProcessingError, validate_url
+from .failures import record_failure
 from .net import count_non_empty_lines, extract_links_from_markdown, move_to_folder
 from .processor import process_article
 
@@ -50,6 +51,41 @@ def recover_stale(root: Path, cfg: Config) -> int:
     return n
 
 
+def _process_links(
+    links: List[Tuple[str, str]],
+    path: Path,
+    root: Path,
+    cfg: Config,
+    engine,
+    force: bool,
+    kind: str,
+) -> Tuple[int, ProcessingError]:
+    """Run every link in one source file, recording each failure by URL.
+
+    The file-level verdict is still "any link worked", which is right — a
+    ten-link file with one good article is not a failed file. But that verdict
+    used to be the *only* record, so the other nine vanished. Each failure now
+    gets its own ledger line, and the returned error is the one that names the
+    file in 04_failed/.
+    """
+    ok = 0
+    worst = ProcessingError.UNKNOWN
+    for url, title in links:
+        success, err = process_article(url, title, cfg, engine, force=force)
+        if success:
+            ok += 1
+        else:
+            worst = err
+            record_failure(
+                root, source_file=path.name, url=url, title=title, error=err
+            )
+        logger.info(
+            "[%s %d/%d] %s -> %s", kind, ok, len(links), url[:60],
+            "ok" if success else err.value,
+        )
+    return ok, worst
+
+
 def process_inbox_file(path: Path, root: Path, cfg: Config, engine, force: bool = False) -> bool:
     """Claim one inbox file, process it, land it in success/failed. Returns success."""
     success_dir = root / cfg.folders.success
@@ -67,13 +103,12 @@ def process_inbox_file(path: Path, root: Path, cfg: Config, engine, force: bool 
             if not links:
                 move_to_folder(path, failed_dir, _error_suffix(ProcessingError.NO_URL_FOUND))
                 return False
-            ok = 0
-            for title, url in links:
-                success, err = process_article(url, title, cfg, engine, force=force)
-                ok += 1 if success else 0
-                logger.info("[tabs %d/%d] %s -> %s", ok, len(links), url[:60],
-                            "ok" if success else err.value)
-            move_to_folder(path, success_dir if ok else failed_dir)
+            ok, worst = _process_links(
+                [(url, title) for title, url in links], path, root, cfg, engine, force, "tabs"
+            )
+            move_to_folder(
+                path, success_dir if ok else failed_dir, "" if ok else _error_suffix(worst)
+            )
             return ok > 0
 
         if name_lower.endswith(".md"):
@@ -85,15 +120,13 @@ def process_inbox_file(path: Path, root: Path, cfg: Config, engine, force: bool 
             if not links:
                 move_to_folder(path, failed_dir, _error_suffix(ProcessingError.NO_URL_FOUND))
                 return False
-            ok = 0
-            for link in links:
-                url = link["url"]
-                title = link["title"]
-                success, err = process_article(url, title, cfg, engine, force=force)
-                ok += 1 if success else 0
-                logger.info("[md %d/%d] %s -> %s", ok, len(links), url[:60],
-                            "ok" if success else err.value)
-            move_to_folder(path, success_dir if ok else failed_dir)
+            ok, worst = _process_links(
+                [(link["url"], link["title"]) for link in links],
+                path, root, cfg, engine, force, "md",
+            )
+            move_to_folder(
+                path, success_dir if ok else failed_dir, "" if ok else _error_suffix(worst)
+            )
             return ok > 0
 
         logger.info("Unsupported file type, moving to failed: %s", path.name)
