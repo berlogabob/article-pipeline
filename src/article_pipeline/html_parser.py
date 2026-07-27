@@ -21,6 +21,7 @@ import requests
 import trafilatura
 from bs4 import BeautifulSoup
 
+from .errors import FetchError, ProcessingError
 from .net import normalize_url
 from .rate_limit import DomainRateLimiter, get_rate_limiter
 
@@ -30,6 +31,14 @@ _session = requests.Session()
 _session.headers.update({"User-Agent": "Mozilla/5.0 (compatible; ArticlePipeline/1.0)"})
 
 MAX_CONTENT_SIZE = 10 * 1024 * 1024
+
+# Statuses that will not change on a retry, so the caller can stop asking.
+_DEFINITIVE_STATUS = {
+    401: ProcessingError.BLOCKED,
+    403: ProcessingError.BLOCKED,
+    404: ProcessingError.NOT_FOUND,
+    410: ProcessingError.NOT_FOUND,
+}
 
 _IMAGE_MD_RE = re.compile(
     r'!\[[^\]]*\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*"|\s+\'[^\']*\')?\s*\)'
@@ -106,6 +115,19 @@ def fetch_html(
                     time.sleep(backoff)
                 continue
 
+            # Reaching here with a 429 means the ladder above is spent.
+            if response.status_code == 429:
+                raise FetchError(
+                    ProcessingError.BLOCKED, f"HTTP 429 (rate limited) for {url[:80]}"
+                )
+            if response.status_code in _DEFINITIVE_STATUS:
+                # Say what actually happened. Reported as parse_error these
+                # were indistinguishable from an empty page, so a retry pass
+                # would keep hammering a site that has refused us outright.
+                raise FetchError(
+                    _DEFINITIVE_STATUS[response.status_code],
+                    f"HTTP {response.status_code} for {url[:80]}",
+                )
             response.raise_for_status()
             content = response.text
             if len(content) > MAX_CONTENT_SIZE:
@@ -113,6 +135,8 @@ def fetch_html(
                 content = content[:MAX_CONTENT_SIZE]
             logger.info("Fetched via requests: %s", url[:80])
             return content
+    except requests.Timeout as e:
+        raise FetchError(ProcessingError.TIMEOUT, str(e)) from e
     except requests.RequestException as e:
         logger.error("Requests failed: %s", e)
         return None

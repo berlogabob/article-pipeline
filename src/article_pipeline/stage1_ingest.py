@@ -3,7 +3,7 @@
 import logging
 from typing import List, NotRequired, Optional, Tuple, TypedDict
 
-from .errors import ProcessingError, validate_url
+from .errors import FetchError, ProcessingError, validate_url
 from .net import expand_url, get_domain, normalize_url
 from .html_parser import extract_image_urls, fetch_and_extract_article
 from .youtube import (
@@ -111,6 +111,11 @@ def ingest_article(
                 canonical_url = article_canonical_url
                 final_url = canonical_url
                 is_yt = is_youtube(final_url)
+    except FetchError as e:
+        # The server gave a definitive answer; it already knows which outcome
+        # this is, so don't guess at it below.
+        logger.error("Fetch refused for %s: %s", final_url[:80], e)
+        return None, e.error
     except Exception as e:
         logger.error("Network error for %s: %s", final_url[:80], e)
         if "timeout" in str(e).lower():

@@ -1,7 +1,9 @@
 from unittest.mock import Mock, patch
 
+import pytest
 import requests
 
+from article_pipeline.errors import FetchError, ProcessingError
 from article_pipeline.html_parser import fetch_html
 
 
@@ -59,13 +61,17 @@ def test_fetch_html_stops_after_configured_429_retries():
     ) as mock_get, patch(
         "article_pipeline.html_parser.time.sleep"
     ) as mock_sleep:
-        result = fetch_html(
-            "https://example.com/b",
-            retry_429_count=2,
-            retry_429_backoff_seconds=0.5,
-            rate_limiter=_rate_limiter(),
-        )
+        # A spent 429 ladder means the site is rate-limiting us, not that the
+        # page is empty — it says so rather than returning a bare None that
+        # would later be reported as parse_error.
+        with pytest.raises(FetchError) as excinfo:
+            fetch_html(
+                "https://example.com/b",
+                retry_429_count=2,
+                retry_429_backoff_seconds=0.5,
+                rate_limiter=_rate_limiter(),
+            )
 
-    assert result is None
+    assert excinfo.value.error is ProcessingError.BLOCKED
     assert mock_get.call_count == 3
     assert mock_sleep.call_count == 2
