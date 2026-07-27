@@ -14,13 +14,14 @@ import html as html_lib
 import logging
 import re
 import time
-from typing import List, Optional, TypedDict
+from typing import List, NotRequired, Optional, TypedDict
 from urllib.parse import urljoin, urlparse
 
 import requests
 import trafilatura
 from bs4 import BeautifulSoup
 
+from .net import normalize_url
 from .rate_limit import DomainRateLimiter, get_rate_limiter
 
 logger = logging.getLogger("article_pipeline")
@@ -39,6 +40,14 @@ class ExtractedArticle(TypedDict):
     text: str
     title: Optional[str]
     canonical_url: Optional[str]
+    # Set when the body came from Open Graph tags rather than the article
+    # itself, so the note can say so and be found again for reprocessing.
+    metadata_only: NotRequired[bool]
+
+
+# An og:description shorter than this carries no information (Kaggle serves
+# "Kaggle"), so a note built from it would be worse than the failure.
+MIN_METADATA_DESCRIPTION = 40
 
 
 def validate_url(url: str) -> bool:
@@ -242,13 +251,16 @@ def fetch_and_extract_article(
     retry_429_count: int = 3,
     retry_429_backoff_seconds: float = 1.0,
     rate_limiter: Optional[DomainRateLimiter] = None,
+    _follow_canonical: bool = True,
 ) -> Optional[ExtractedArticle]:
     """Fetch `url` and extract text/title/canonical_url in one shot.
 
     Builds on fetch_html()/extract_text_from_html() the same way
     fetch_and_extract() does, but also resolves the page's resolved title and
     canonical URL, and falls back to og:/twitter: metadata extraction for a
-    handful of sites trafilatura can't parse (see _metadata_fallback_article).
+    handful of sites trafilatura can't parse (see _metadata_fallback_article),
+    and, when nothing is extractable, one retry against the page's declared
+    canonical URL (see _extract_from_canonical).
     """
     html = fetch_html(
         url,
@@ -272,12 +284,51 @@ def fetch_and_extract_article(
         )
         if fallback_article:
             return fallback_article
+        # Nothing extractable here, but the page told us where it really
+        # lives. Redirectors and share interstitials (share.google, link
+        # wrappers) render no article text of their own while still carrying
+        # og:url/rel=canonical for the target — following it once turns the
+        # single largest failure class into a normal fetch.
+        if _follow_canonical and canonical_url:
+            return _extract_from_canonical(
+                url,
+                canonical_url,
+                timeout=timeout,
+                retry_429_count=retry_429_count,
+                retry_429_backoff_seconds=retry_429_backoff_seconds,
+                rate_limiter=rate_limiter,
+            )
         return None
     return {
         "text": text,
         "title": title,
         "canonical_url": canonical_url,
     }
+
+
+def _extract_from_canonical(
+    url: str,
+    canonical_url: str,
+    **kwargs,
+) -> Optional[ExtractedArticle]:
+    """Retry extraction against a page's declared canonical URL, exactly once.
+
+    Guarded on the *normalized* URLs differing, so a page whose canonical is
+    itself — the common case — costs nothing and cannot loop. The retry passes
+    _follow_canonical=False, so a chain of redirectors stops after one hop
+    rather than walking indefinitely.
+    """
+    if normalize_url(canonical_url) == normalize_url(url):
+        return None
+    logger.info("Retrying via canonical URL: %s -> %s", url[:60], canonical_url[:60])
+    article = fetch_and_extract_article(
+        canonical_url, _follow_canonical=False, **kwargs
+    )
+    if article is None:
+        return None
+    # Report the canonical we followed, not whatever the target re-declares,
+    # so the note is filed under the URL we actually read.
+    return {**article, "canonical_url": canonical_url}
 
 
 def _metadata_fallback_article(
@@ -289,12 +340,11 @@ def _metadata_fallback_article(
 ) -> Optional[ExtractedArticle]:
     parsed = urlparse(url)
     host = parsed.netloc.lower().removeprefix("www.")
-    if host not in {"instagram.com", "huggingface.co"}:
-        return None
-
     soup = BeautifulSoup(html, "html.parser")
     if host == "huggingface.co":
         return _huggingface_metadata_article(url, soup, title, canonical_url)
+    if host != "instagram.com":
+        return _generic_metadata_article(url, soup, title, canonical_url)
 
     og_title = _meta_content(soup, "og:title")
     og_description = _meta_content(soup, "og:description")
@@ -328,6 +378,51 @@ def _metadata_fallback_article(
         "text": text,
         "title": _clean_title(fallback_title),
         "canonical_url": canonical,
+    }
+
+
+def _generic_metadata_article(
+    url: str,
+    soup: BeautifulSoup,
+    title: Optional[str],
+    canonical_url: Optional[str],
+) -> Optional[ExtractedArticle]:
+    """Last resort for pages whose article body lives only in JavaScript.
+
+    Social posts and SPA shells — X, Threads, YouTube, most modern app pages —
+    serve a bare skeleton plus Open Graph tags. For a short-form post the
+    og:description *is* the content; for a long article it is a summary.
+    Either beats dropping the link, provided the note admits the body is
+    metadata only, which is what `metadata_only` marks for the renderer.
+
+    The description floor exists because a one-word og:description ("Kaggle")
+    produces a note with no information in it at all.
+    """
+    description = (
+        _meta_content(soup, "og:description")
+        or _meta_content(soup, "twitter:description")
+        or _meta_content(soup, "description")
+    )
+    if not description or len(description.strip()) < MIN_METADATA_DESCRIPTION:
+        return None
+    resolved_title = (
+        _meta_content(soup, "og:title") or _meta_content(soup, "twitter:title") or title
+    )
+    if not resolved_title:
+        return None
+
+    canonical = canonical_url or _meta_content(soup, "og:url") or url
+    site = _meta_content(soup, "og:site_name") or urlparse(
+        canonical
+    ).netloc.lower().removeprefix("www.")
+    logger.info("Using metadata fallback for %s: %s", site, url[:80])
+    return {
+        "text": "\n".join(
+            [f"Source: {site}", f"URL: {canonical}", "", description.strip()]
+        ),
+        "title": _clean_title(resolved_title),
+        "canonical_url": canonical,
+        "metadata_only": True,
     }
 
 

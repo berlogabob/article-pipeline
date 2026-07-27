@@ -10,6 +10,7 @@ from .youtube import (
     YouTubePlaylistVideo,
     get_youtube_playlist_metadata,
     get_youtube_transcript,
+    get_youtube_video_metadata,
     is_youtube,
     is_youtube_homepage,
     is_youtube_playlist,
@@ -27,6 +28,9 @@ class IngestResult(TypedDict):
     is_youtube: bool
     source: str
     canonical_url: str
+    # True when the body is Open Graph / oEmbed metadata rather than the
+    # article itself — the note records this so it can be reprocessed later.
+    metadata_only: bool
     playlist_videos: NotRequired[list[YouTubePlaylistVideo]]
 
 
@@ -54,6 +58,7 @@ def ingest_article(
     resolved_title = ""
     canonical_url = ""
     playlist_videos: List[YouTubePlaylistVideo] = []
+    metadata_only = False
 
     try:
         if is_playlist:
@@ -71,11 +76,25 @@ def ingest_article(
         elif is_yt:
             extracted = get_youtube_transcript(final_url, force_asr=force_youtube_asr)
             if not extracted:
-                logger.error(
-                    "YouTube transcript unavailable after all transcript layers: %s",
-                    final_url[:80],
+                # Every transcript layer is exhausted, but oEmbed still knows
+                # the title and author. A stub note beats losing the link —
+                # captions can be absent for years, and the URL is the part
+                # worth keeping.
+                video_metadata = get_youtube_video_metadata(final_url)
+                if video_metadata is None:
+                    logger.error(
+                        "YouTube transcript unavailable after all transcript layers: %s",
+                        final_url[:80],
+                    )
+                    return None, ProcessingError.EMPTY_CONTENT
+                logger.info(
+                    "No transcript; using YouTube metadata only: %s", final_url[:80]
                 )
-                return None, ProcessingError.EMPTY_CONTENT
+                extracted = video_metadata["text"]
+                resolved_title = video_metadata["title"]
+                canonical_url = video_metadata["canonical_url"]
+                final_url = canonical_url
+                metadata_only = True
         else:
             fetched_url = final_url
             article = fetch_and_extract_article(fetched_url)
@@ -83,6 +102,7 @@ def ingest_article(
                 logger.error("Extraction failed: %s", fetched_url[:80])
                 return None, ProcessingError.PARSE_ERROR
             extracted = article["text"]
+            metadata_only = bool(article.get("metadata_only"))
             image_urls = extract_image_urls(extracted, fetched_url)
             if article.get("title"):
                 resolved_title = article["title"] or ""
@@ -112,6 +132,7 @@ def ingest_article(
         "is_youtube": is_yt,
         "source": get_domain(final_url),
         "canonical_url": canonical_url,
+        "metadata_only": metadata_only,
     }
     if playlist_videos:
         result["playlist_videos"] = playlist_videos

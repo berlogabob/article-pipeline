@@ -208,11 +208,37 @@ def test_ingest_article_rejects_youtube_homepage():
     assert err.value == "invalid_url"
 
 
-def test_ingest_article_rejects_youtube_video_when_transcript_missing():
+def test_a_captionless_youtube_video_falls_back_to_oembed_metadata():
+    """Captions can be absent for years; the URL is the part worth keeping."""
     with patch(
         "article_pipeline.stage1_ingest.expand_url", side_effect=lambda url: url
     ), patch(
         "article_pipeline.stage1_ingest.get_youtube_transcript", return_value=None
+    ), patch(
+        "article_pipeline.stage1_ingest.get_youtube_video_metadata",
+        return_value={
+            "text": "Title: A Video\nURL: https://www.youtube.com/watch?v=gNZaDBeHgSk\nTranscript: not available",
+            "title": "A Video",
+            "canonical_url": "https://www.youtube.com/watch?v=gNZaDBeHgSk",
+        },
+    ):
+        ingest, err = ingest_article(
+            "https://www.youtube.com/watch?v=gNZaDBeHgSk", "old title"
+        )
+
+    assert ingest is not None
+    assert err.value == "unknown"
+    assert ingest["resolved_title"] == "A Video"
+    assert ingest["metadata_only"] is True, "the note must admit it has no transcript"
+
+
+def test_a_captionless_youtube_video_with_no_metadata_still_fails():
+    with patch(
+        "article_pipeline.stage1_ingest.expand_url", side_effect=lambda url: url
+    ), patch(
+        "article_pipeline.stage1_ingest.get_youtube_transcript", return_value=None
+    ), patch(
+        "article_pipeline.stage1_ingest.get_youtube_video_metadata", return_value=None
     ):
         ingest, err = ingest_article(
             "https://www.youtube.com/watch?v=gNZaDBeHgSk", "old title"

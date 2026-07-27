@@ -119,6 +119,7 @@ def process_article(
             llm_provider=cfg.engine.provider or "",
             llm_model=cfg.engine.primary_model or "",
             is_youtube=ingest["is_youtube"],
+            metadata_only=ingest.get("metadata_only", False),
         )
         articles_dir.mkdir(parents=True, exist_ok=True)
         out_path = get_unique_path(

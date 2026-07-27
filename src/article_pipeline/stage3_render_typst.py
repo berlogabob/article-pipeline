@@ -188,6 +188,7 @@ def render_typst_note(
     llm_provider: str = "",
     llm_model: str = "",
     is_youtube: bool = False,
+    metadata_only: bool = False,
 ) -> Tuple[str, str]:
     """Returns (note_id, typst_source)."""
     image_map = image_map or {}
@@ -212,6 +213,11 @@ def render_typst_note(
         properties["llm_provider"] = llm_provider
     if llm_model:
         properties["llm_model"] = llm_model
+    if metadata_only:
+        # The body is Open Graph / oEmbed metadata, not the article. Recorded
+        # so these are findable and re-runnable once the source becomes
+        # extractable (a JS renderer, an API, captions appearing later).
+        properties["extraction"] = "metadata-only"
 
     parts = [
         build_header(nid, title, date, metadata.tags, properties),
