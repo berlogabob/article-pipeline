@@ -9,3 +9,6 @@ config.yaml
 03_success/*
 04_failed/*
 !*/.gitkeep
+
+# Per-URL failure ledger — local run state, not source
+failures.jsonl
