@@ -69,16 +69,6 @@ JSON должен содержать ровно эти ключи:
 """
 
 
-def create_fallback_metadata(url: str) -> ArticleMetadata:
-    return ArticleMetadata(
-        summary_ru=f"Ссылка: {url}\n(LLM не справился)",
-        tags=["tabs-import"],
-        verification_notes="Fallback",
-        is_tutorial=False,
-        step_by_step_guidance=None,
-    )
-
-
 def normalize_tag(tag: str) -> str:
     """Slugify a tag so identical concepts collapse to one backlink token."""
     cleaned = str(tag).strip()

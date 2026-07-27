@@ -1,7 +1,8 @@
 """Stage 2: extracted text -> ArticleMetadata via the configured engine.
 
-Retry ladder: primary model over each temperature, then fallback model,
-then create_fallback_metadata as the last resort.
+Retry ladder: primary model over each temperature, then fallback model. If
+every attempt fails the caller is told so — see summarize's docstring for why
+placeholder metadata is worse than a reported failure.
 """
 
 import json
@@ -14,7 +15,6 @@ from .metadata import (
     METADATA_JSON_KEYS,
     ArticleMetadata,
     build_prompt,
-    create_fallback_metadata,
     normalize_tags,
 )
 from .net import clean_json
@@ -64,7 +64,15 @@ def summarize(
     is_youtube: bool = False,
     max_prompt_chars: int = 8000,
     url: str = "",
-) -> ArticleMetadata:
+) -> Optional[ArticleMetadata]:
+    """Summarize `extracted_text`, or None if every attempt failed.
+
+    Returning None rather than placeholder metadata is deliberate. A note
+    whose body reads "(LLM не справился)" is written to the vault, syncs to
+    every device, and is then skipped by dedup forever — it looks processed,
+    so nothing ever comes back to it. A failure the caller can see leaves the
+    source file in 04_failed where a retry can pick it up.
+    """
     temps = temperature_attempts or [0.05, 0.25, 0.50]
     prompt = build_prompt(extracted_text, is_youtube=is_youtube, max_chars=max_prompt_chars)
 
@@ -88,5 +96,7 @@ def summarize(
             except Exception as e:
                 logger.warning("LLM error from %s: %s: %s", model, type(e).__name__, e)
 
-    logger.error("All LLM attempts failed, using fallback metadata")
-    return create_fallback_metadata(url)
+    logger.error(
+        "All %d LLM attempts failed for %s", len(models) * len(temps), url[:80] or "(no url)"
+    )
+    return None

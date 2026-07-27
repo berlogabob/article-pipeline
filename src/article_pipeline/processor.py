@@ -85,6 +85,10 @@ def process_article(
         max_prompt_chars=cfg.content.max_length,
         url=final_url,
     )
+    if metadata is None:
+        # No note: a stub that looks processed would be skipped by dedup
+        # forever, so the link would be silently lost rather than retried.
+        return False, ProcessingError.LLM_ERROR
 
     if cfg.output_format == "typst":
         image_map = {}
