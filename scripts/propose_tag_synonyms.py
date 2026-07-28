@@ -41,8 +41,12 @@ from typing import Dict, List, Optional, Sequence, Tuple
 
 EMBED_MODEL = "bge-m3"
 OLLAMA = "http://127.0.0.1:11434"
-# Deliberately loose: this is the recall stage. Precision comes from the judge.
-CANDIDATE_COSINE = 0.70
+# Deliberately loose: this is the recall stage. Precision comes from the judge,
+# so the only cost of a low threshold is judge calls — but the cost of a high
+# one is a merge silently never considered. Calibrated against a known-true
+# pair: `ai`/`искусственный-интеллект` scores 0.667, the largest single
+# fragmentation in the vault, and 0.70 dropped it before it was ever judged.
+CANDIDATE_COSINE = 0.66
 # Judging every pair of 5000 tags is impossible; judging the tags that actually
 # cluster something is enough. A tag below this never forms a cluster anyway.
 MIN_NOTES = 5
