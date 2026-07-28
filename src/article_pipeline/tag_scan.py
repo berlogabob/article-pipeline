@@ -43,6 +43,27 @@ def parse_header(text: str) -> VaultNote | None:
     return VaultNote(_unescape(m_id.group(1)), _unescape(m_title.group(1)), tags)
 
 
+def _index_notes(vault_dir: Path) -> List[dict]:
+    """Notes from the vault index, or from a donor when the index is absent.
+
+    The index is rewritten only when a scan finishes, so it can be missing for
+    minutes during a rebuild — and a run in that window would otherwise get an
+    empty vocabulary and quietly mint the singleton tags the vocabulary exists
+    to prevent. Donors carry the same note list and survive the gap.
+    """
+    for candidate in [vault_dir / "_index" / "index.json", *sorted((vault_dir / "_system" / "index").glob("*.json"))]:
+        try:
+            notes = json.loads(candidate.read_text(encoding="utf-8")).get("notes")
+        except (OSError, ValueError):
+            continue
+        if notes:
+            if candidate.name != "index.json":
+                logger.info("Index unavailable; taking tag vocabulary from %s", candidate.name)
+            return notes
+    logger.warning("No usable tag vocabulary under %s", vault_dir)
+    return []
+
+
 def vocabulary(vault_dir: Path, min_notes: int = 5, limit: int = 200) -> List[str]:
     """The vault's established tags, most-used first.
 
@@ -56,11 +77,8 @@ def vocabulary(vault_dir: Path, min_notes: int = 5, limit: int = 200) -> List[st
     below it does not cluster anything, so proposing it to the model would just
     mint another singleton.
     """
-    index = vault_dir / "_index" / "index.json"
-    try:
-        notes = json.loads(index.read_text(encoding="utf-8")).get("notes") or []
-    except (OSError, ValueError) as e:
-        logger.warning("No usable tag vocabulary at %s: %s", index, e)
+    notes = _index_notes(vault_dir)
+    if not notes:
         return []
     counts: Counter[str] = Counter()
     for note in notes:

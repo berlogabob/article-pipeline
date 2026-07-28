@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Runs the capture pipeline whenever the notes folder changes.
+
+  Install:
+    cp scripts/org.tylog.capture.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/org.tylog.capture.plist
+  Remove:
+    launchctl unload ~/Library/LaunchAgents/org.tylog.capture.plist
+
+  WatchPaths fires on any change under the directory, so saving several links
+  in quick succession can trigger several runs. ThrottleInterval collapses
+  those into one. stage_notes.sh is idempotent regardless — it stages only
+  files with no counterpart in 03_success/04_failed — so an extra run is a
+  no-op rather than a duplicate article.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>org.tylog.capture</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-lc</string>
+    <string>exec "$HOME/Nextcloud/scripts/article-pipeline/scripts/stage_notes.sh"</string>
+  </array>
+
+  <key>WatchPaths</key>
+  <array>
+    <string>/Users/berloga/Nextcloud/Notes</string>
+  </array>
+
+  <!-- Do not fire on login: a run costs real LLM calls, and anything saved
+       while logged out is picked up by the next genuine change anyway. -->
+  <key>RunAtLoad</key>
+  <false/>
+
+  <!-- Five minutes. A burst of saved links becomes one run, and a pipeline
+       run that is still working is never overlapped by a second one. -->
+  <key>ThrottleInterval</key>
+  <integer>300</integer>
+
+  <key>Nice</key>
+  <integer>5</integer>
+
+  <key>StandardOutPath</key>
+  <string>/Users/berloga/.article-pipeline/logs/capture.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/berloga/.article-pipeline/logs/capture.log</string>
+</dict>
+</plist>

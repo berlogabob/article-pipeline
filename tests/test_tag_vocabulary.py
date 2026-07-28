@@ -86,3 +86,28 @@ def test_normalize_tags_matches_the_app_casing():
         "machine-learning",
         "deep-learning",
     ]
+
+
+def test_vocabulary_falls_back_to_a_donor_when_the_index_is_missing(tmp_path):
+    """The index only exists between completed scans. A pipeline run during a
+    rebuild would otherwise get an empty vocabulary and mint singletons."""
+    donors = tmp_path / "_system" / "index"
+    donors.mkdir(parents=True)
+    (donors / "laptop.json").write_text(
+        json.dumps({"notes": [{"path": f"a{i}.typ", "tags": ["из-донора"]} for i in range(5)]}),
+        encoding="utf-8",
+    )
+
+    assert vocabulary(tmp_path) == ["из-донора"]
+
+
+def test_the_index_wins_over_a_donor_when_both_exist(tmp_path):
+    vault = _vault(tmp_path, [{"path": f"a{i}.typ", "tags": ["из-индекса"]} for i in range(5)])
+    donors = vault / "_system" / "index"
+    donors.mkdir(parents=True)
+    (donors / "laptop.json").write_text(
+        json.dumps({"notes": [{"path": f"b{i}.typ", "tags": ["из-донора"]} for i in range(9)]}),
+        encoding="utf-8",
+    )
+
+    assert vocabulary(vault) == ["из-индекса"]
