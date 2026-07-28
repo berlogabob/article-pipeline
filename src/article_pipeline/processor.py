@@ -13,7 +13,7 @@ from .stage1_ingest import ingest_article
 from .stage2_summarize import summarize
 from .stage3_render_markdown import build_content
 from .stage3_render_typst import note_id, render_typst_note
-from .tag_scan import VaultNote, find_related, scan_vault
+from .tag_scan import VaultNote, find_related, scan_vault, vocabulary
 from .youtube import YouTubePlaylistVideo
 
 logger = logging.getLogger("article_pipeline")
@@ -59,12 +59,16 @@ def process_article(
     # resolved from the page's own HTML/metadata when we have one.
     resolved_title = ingest["resolved_title"] or title
 
+    tag_vocabulary: List[str] = []
     if cfg.output_format == "typst":
         vault = Path(cfg.typst.vault_dir).expanduser()
         articles_dir = vault / cfg.typst.articles_subdir
         vault_notes = scan_vault(
             articles_dir, max_files=cfg.typst.related_articles.max_vault_files_scanned
         )
+        # Offered to the model so it reuses established tags instead of coining
+        # a fresh one per article — a tag nobody else uses groups nothing.
+        tag_vocabulary = vocabulary(vault)
         nid = note_id(final_url)
         if not force and any(n.id == nid for n in vault_notes):
             logger.info("Already in vault (id %s): %s", nid, final_url[:80])
@@ -84,6 +88,7 @@ def process_article(
         is_youtube=ingest["is_youtube"],
         max_prompt_chars=cfg.content.max_length,
         url=final_url,
+        vocabulary=tag_vocabulary,
     )
     if metadata is None:
         # No note: a stub that looks processed would be skipped by dedup

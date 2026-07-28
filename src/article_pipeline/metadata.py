@@ -25,7 +25,30 @@ class ArticleMetadata(BaseModel):
     step_by_step_guidance: Optional[str] = None
 
 
-def build_prompt(extracted_text: str, is_youtube: bool = False, max_chars: int = 8000) -> str:
+def build_vocabulary_section(vocabulary: Optional[List[str]]) -> str:
+    """Ask the model to reuse the library's existing tags.
+
+    Without this every article invents its own tags: of 4345 tags in the vault,
+    3617 were used exactly once, so half the articles had no tag shared with
+    5+ notes and could not be clustered at all. A tag nobody else uses is a
+    tag that groups nothing.
+    """
+    if not vocabulary:
+        return ""
+    return (
+        "\nСловарь тегов библиотеки (используй существующий тег, если он подходит "
+        "по смыслу):\n"
+        + ", ".join(vocabulary)
+        + "\nНовый тег придумывай только если ни один существующий не описывает тему.\n"
+    )
+
+
+def build_prompt(
+    extracted_text: str,
+    is_youtube: bool = False,
+    max_chars: int = 8000,
+    vocabulary: Optional[List[str]] = None,
+) -> str:
     source_hint = (
         "Это YouTube материал. Определи, является ли он обучающим туториалом."
         if is_youtube
@@ -63,20 +86,25 @@ JSON должен содержать ровно эти ключи:
 }}
 
 {source_hint}
-
+{build_vocabulary_section(vocabulary)}
 Текст:
 {extracted_text[:max_chars]}
 """
 
 
 def normalize_tag(tag: str) -> str:
-    """Slugify a tag so identical concepts collapse to one backlink token."""
+    """Slugify a tag so identical concepts collapse to one backlink token.
+
+    Lowercased to match _normalizeTag in TyLog's scanner.dart: the app compares
+    tags by exact string, so `AI` and `ai` would otherwise be two concepts that
+    each fall short of the clustering threshold.
+    """
     cleaned = str(tag).strip()
     cleaned = cleaned.removeprefix("#").strip()
     if cleaned.startswith("[[") and cleaned.endswith("]]"):
         cleaned = cleaned[2:-2].strip()
-    cleaned = re.sub(r"\s+", "-", cleaned)
-    return cleaned.strip("-")
+    cleaned = re.sub(r"[\s_]+", "-", cleaned)
+    return cleaned.strip("-").lower()
 
 
 def normalize_tags(tags: List[str]) -> List[str]:

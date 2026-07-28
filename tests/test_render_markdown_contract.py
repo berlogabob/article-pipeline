@@ -53,12 +53,14 @@ class MetadataMarkdownContractTests(unittest.TestCase):
         self.assertEqual(data["source"], "example.com")
         self.assertEqual(data["source_url"], "https://example.com")
         self.assertEqual(data["author"], "Jane Doe")
-        self.assertEqual(data["tags"], ["AI-tools", "Google-Drive", "PDF"])
+        # Lowercased to match TyLog's scanner: the app compares tags by exact
+        # string, so AI-tools and ai-tools would be two unrelated concepts.
+        self.assertEqual(data["tags"], ["ai-tools", "google-drive", "pdf"])
 
     def test_normalize_tags_removes_hashes_spaces_and_duplicates(self):
         self.assertEqual(
             normalize_tags(["#обзоры техники", "Google Drive", "[[LLM]]", "LLM"]),
-            ["обзоры-техники", "Google-Drive", "LLM"],
+            ["обзоры-техники", "google-drive", "llm"],
         )
 
     def test_build_content_includes_tutorial_guidance_only_for_tutorials(self):

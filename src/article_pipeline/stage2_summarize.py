@@ -64,6 +64,7 @@ def summarize(
     is_youtube: bool = False,
     max_prompt_chars: int = 8000,
     url: str = "",
+    vocabulary: Optional[List[str]] = None,
 ) -> Optional[ArticleMetadata]:
     """Summarize `extracted_text`, or None if every attempt failed.
 
@@ -74,7 +75,12 @@ def summarize(
     source file in 04_failed where a retry can pick it up.
     """
     temps = temperature_attempts or [0.05, 0.25, 0.50]
-    prompt = build_prompt(extracted_text, is_youtube=is_youtube, max_chars=max_prompt_chars)
+    prompt = build_prompt(
+        extracted_text,
+        is_youtube=is_youtube,
+        max_chars=max_prompt_chars,
+        vocabulary=vocabulary,
+    )
 
     models = [primary_model]
     if fallback_model and fallback_model != primary_model:

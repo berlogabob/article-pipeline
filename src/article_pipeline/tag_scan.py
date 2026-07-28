@@ -4,8 +4,10 @@ Reads only the tylog.note.with(...) header of each .typ file via regex —
 mirrors TypstSeq's safe source parser, never depends on the app's _index/.
 """
 
+import json
 import logging
 import re
+from collections import Counter
 from pathlib import Path
 from typing import List, NamedTuple
 
@@ -39,6 +41,35 @@ def parse_header(text: str) -> VaultNote | None:
         _unescape(t) for t in _TAG_ITEM_RE.findall(m_tags.group(1))
     ) if m_tags else frozenset()
     return VaultNote(_unescape(m_id.group(1)), _unescape(m_title.group(1)), tags)
+
+
+def vocabulary(vault_dir: Path, min_notes: int = 5, limit: int = 200) -> List[str]:
+    """The vault's established tags, most-used first.
+
+    Read from `_index/index.json` rather than by scanning headers, because the
+    tags that matter most are not in the headers: articles imported from Logseq
+    carry `tags: ()` and keep their real tags on a body `tags::` line that only
+    TyLog's scanner parses. Header scanning would return a vocabulary missing
+    hundreds of notes' worth of tags.
+
+    `min_notes` mirrors kConceptMapMinNotes in tylog_core/graph.dart — a tag
+    below it does not cluster anything, so proposing it to the model would just
+    mint another singleton.
+    """
+    index = vault_dir / "_index" / "index.json"
+    try:
+        notes = json.loads(index.read_text(encoding="utf-8")).get("notes") or []
+    except (OSError, ValueError) as e:
+        logger.warning("No usable tag vocabulary at %s: %s", index, e)
+        return []
+    counts: Counter[str] = Counter()
+    for note in notes:
+        for tag in note.get("tags") or []:
+            tag = str(tag).strip().lower()
+            if tag:
+                counts[tag] += 1
+    established = [t for t, n in counts.most_common() if n >= min_notes]
+    return established[:limit]
 
 
 def scan_vault(articles_dir: Path, max_files: int = 5000) -> List[VaultNote]:
