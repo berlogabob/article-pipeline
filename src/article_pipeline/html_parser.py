@@ -269,7 +269,52 @@ def _clean_title(title: str) -> str:
     return " ".join(title.split()).strip()
 
 
+# Shell pages that fetch fine but carry no article: JS walls, saved search
+# results, CDN challenges, and Habr's "removed by moderator" stub. A note
+# built from one is worse than a recorded failure — 40 such notes were
+# cleaned out of the vault on 2026-08-02.
+_ERROR_PAGE_TITLES = re.compile(
+    r"^(javascript is not available|google search|google image result"
+    r"|just a moment|access denied|attention required)",
+    re.I,
+)
+_ERROR_PAGE_MARKERS = ("Материал был снят с публикации модератором",)
+
+
+def _is_error_shell(article: ExtractedArticle) -> bool:
+    title = (article.get("title") or "").strip()
+    if _ERROR_PAGE_TITLES.match(title):
+        return True
+    return any(marker in article["text"] for marker in _ERROR_PAGE_MARKERS)
+
+
 def fetch_and_extract_article(
+    url: str,
+    timeout: int = 15,
+    retry_429_count: int = 3,
+    retry_429_backoff_seconds: float = 1.0,
+    rate_limiter: Optional[DomainRateLimiter] = None,
+    _follow_canonical: bool = True,
+) -> Optional[ExtractedArticle]:
+    article = _fetch_and_extract_article(
+        url,
+        timeout=timeout,
+        retry_429_count=retry_429_count,
+        retry_429_backoff_seconds=retry_429_backoff_seconds,
+        rate_limiter=rate_limiter,
+        _follow_canonical=_follow_canonical,
+    )
+    if article and _is_error_shell(article):
+        logger.warning(
+            "Rejecting error-shell page (title: %r): %s",
+            article.get("title"),
+            url[:80],
+        )
+        return None
+    return article
+
+
+def _fetch_and_extract_article(
     url: str,
     timeout: int = 15,
     retry_429_count: int = 3,
@@ -284,17 +329,32 @@ def fetch_and_extract_article(
     canonical URL, and falls back to og:/twitter: metadata extraction for a
     handful of sites trafilatura can't parse (see _metadata_fallback_article),
     and, when nothing is extractable, one retry against the page's declared
-    canonical URL (see _extract_from_canonical).
+    canonical URL (see _extract_from_canonical). Reddit posts are scraped from
+    old.reddit.com before any of that (fetch_reddit_post_article), and the
+    r.jina.ai reader is the last resort for blocked or JS-only pages
+    (fetch_reader_article) — both ported from the old logseq-processor.
     """
-    html = fetch_html(
-        url,
-        timeout=timeout,
-        retry_429_count=retry_429_count,
-        retry_429_backoff_seconds=retry_429_backoff_seconds,
-        rate_limiter=rate_limiter,
-    )
+    reddit_article = fetch_reddit_post_article(url, timeout=timeout)
+    if reddit_article:
+        return reddit_article
+
+    try:
+        html = fetch_html(
+            url,
+            timeout=timeout,
+            retry_429_count=retry_429_count,
+            retry_429_backoff_seconds=retry_429_backoff_seconds,
+            rate_limiter=rate_limiter,
+        )
+    except FetchError:
+        # The site refused us outright (403/429/...). A reader proxy fetches
+        # from its own IPs, so it often succeeds where we are blocked.
+        reader_article = fetch_reader_article(url, timeout=timeout)
+        if reader_article:
+            return reader_article
+        raise
     if not html:
-        return None
+        return fetch_reader_article(url, timeout=timeout)
 
     text = extract_text_from_html(html, include_images=True)
     title = extract_title_from_html(html)
@@ -314,7 +374,7 @@ def fetch_and_extract_article(
         # og:url/rel=canonical for the target — following it once turns the
         # single largest failure class into a normal fetch.
         if _follow_canonical and canonical_url:
-            return _extract_from_canonical(
+            canonical_article = _extract_from_canonical(
                 url,
                 canonical_url,
                 timeout=timeout,
@@ -322,7 +382,11 @@ def fetch_and_extract_article(
                 retry_429_backoff_seconds=retry_429_backoff_seconds,
                 rate_limiter=rate_limiter,
             )
-        return None
+            if canonical_article:
+                return canonical_article
+        # Page fetched but nothing extractable anywhere — the body is behind
+        # JavaScript (Kaggle et al.). Last resort: the reader proxy renders it.
+        return fetch_reader_article(url, timeout=timeout)
     return {
         "text": text,
         "title": title,
@@ -479,6 +543,136 @@ def _huggingface_metadata_article(
         "title": _clean_title(fallback_title),
         "canonical_url": canonical,
     }
+
+
+def fetch_reddit_post_article(url: str, timeout: int = 15) -> Optional[ExtractedArticle]:
+    """Scrape a Reddit post from old.reddit.com, which still serves plain HTML.
+
+    www.reddit.com is a JS shell trafilatura extracts nothing from. Share
+    links (/r/sub/s/xxxx) are resolved to their /comments/ URL first.
+    """
+    parsed = urlparse(url)
+    host = parsed.netloc.lower().removeprefix("www.")
+    if host not in {"reddit.com", "old.reddit.com"}:
+        return None
+    if "/comments/" not in parsed.path:
+        if "/s/" not in parsed.path:
+            return None
+        try:
+            response = _session.get(url, timeout=timeout, allow_redirects=True)
+            parsed = urlparse(response.url)
+        except Exception as e:
+            logger.debug("Reddit share-link resolve failed for %s: %s", url[:80], e)
+            return None
+        if "/comments/" not in parsed.path:
+            return None
+
+    old_url = f"https://old.reddit.com{parsed.path.rstrip('/')}/"
+    try:
+        response = _session.get(old_url, timeout=timeout)
+        response.raise_for_status()
+    except Exception as e:
+        logger.debug("old.reddit fetch failed for %s: %s", url[:80], e)
+        return None
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    thing = soup.find("div", {"data-fullname": lambda v: v and v.startswith("t3_")})
+    if not thing:
+        thing = soup.find("div", class_="thing")
+    if not thing:
+        return None
+
+    title_tag = thing.find("a", class_="title")
+    title = _clean_title(title_tag.get_text(" ", strip=True)) if title_tag else ""
+    author_tag = thing.find("a", class_="author")
+    author = author_tag.get_text(strip=True) if author_tag else ""
+    body_tag = thing.find("div", class_="md")
+    body = body_tag.get_text("\n", strip=True) if body_tag else ""
+    if not title and not body:
+        return None
+
+    canonical = f"https://www.reddit.com{parsed.path.rstrip('/')}/"
+    lines = ["Source: Reddit", f"URL: {canonical}"]
+    if author:
+        lines.append(f"Author: u/{author}")
+    if title:
+        lines.extend(["", "Title:", title])
+    if body:
+        lines.extend(["", "Post:", html_lib.unescape(body)])
+    text = "\n".join(lines).strip()
+    logger.info("Using old.reddit fallback: %s", url[:80])
+    return {
+        "text": text,
+        "title": title or "Reddit post",
+        "canonical_url": canonical,
+    }
+
+
+def _resolve_final_url(url: str, timeout: int = 15) -> str:
+    """Follow redirects to the URL's final location, ignoring the status.
+
+    Share wrappers (share.google et al.) redirect to the real article; even
+    when the target 403s us, the response still carries the final URL. Notes
+    get filed under the real source domain instead of the wrapper's.
+    """
+    try:
+        response = _session.get(url, timeout=timeout, allow_redirects=True)
+        final = str(response.url)
+        response.close()
+        if validate_url(final):
+            return final
+    except Exception as e:
+        logger.debug("Redirect resolve failed for %s: %s", url[:80], e)
+    return url
+
+
+def fetch_reader_article(url: str, timeout: int = 15) -> Optional[ExtractedArticle]:
+    """Fetch through the r.jina.ai reader proxy, which renders JS and is not
+    blocked where we are. Last-resort fallback: returns markdown or None."""
+    url = _resolve_final_url(url, timeout=timeout)
+    reader_url = f"https://r.jina.ai/http://{url}"
+    try:
+        response = _session.get(reader_url, timeout=max(timeout, 30))
+        response.raise_for_status()
+    except Exception as e:
+        logger.debug("Reader fallback failed for %s: %s", url[:80], e)
+        return None
+
+    raw = response.text.strip()
+    title = _reader_field(raw, "Title")
+    source_url = _reader_field(raw, "URL Source")
+    content = (
+        raw.split("Markdown Content:", 1)[1].strip()
+        if "Markdown Content:" in raw
+        else raw
+    )
+    if "Warning: Target URL returned error" in raw and len(content) < 500:
+        return None
+    if title.lower().startswith("just a moment"):
+        return None
+    if len(content) < 200:
+        return None
+
+    canonical = source_url if validate_url(source_url) else url
+    text = "\n".join(
+        [
+            "Source: Reader fallback",
+            f"URL: {canonical}",
+            "",
+            content,
+        ]
+    ).strip()
+    logger.info("Using reader fallback: %s", url[:80])
+    return {
+        "text": text,
+        "title": _clean_title(title or urlparse(url).netloc),
+        "canonical_url": canonical,
+    }
+
+
+def _reader_field(raw: str, name: str) -> str:
+    match = re.search(rf"^{re.escape(name)}:\s*(.+)$", raw, flags=re.M)
+    return match.group(1).strip() if match else ""
 
 
 def _meta_content(soup: BeautifulSoup, key: str) -> Optional[str]:

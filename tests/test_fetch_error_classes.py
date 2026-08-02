@@ -92,7 +92,8 @@ def test_retryable_split_is_what_a_retry_pass_relies_on():
     assert is_retryable(ProcessingError.TIMEOUT)
     assert is_retryable(ProcessingError.PARSE_ERROR)
     assert is_retryable(ProcessingError.LLM_ERROR)
+    # A 403 against us can still succeed via the reader-proxy fallback.
+    assert is_retryable(ProcessingError.BLOCKED)
     # Hammering these again would only annoy the server.
-    assert not is_retryable(ProcessingError.BLOCKED)
     assert not is_retryable(ProcessingError.NOT_FOUND)
     assert not is_retryable(ProcessingError.INVALID_URL)

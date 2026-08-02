@@ -17,7 +17,9 @@ class ProcessingError(Enum):
 
 # Worth another attempt later: the network, the site or the model may behave
 # differently. The rest are settled — a 404 will not become a 200, and a URL
-# that is not a URL will not start being one.
+# that is not a URL will not start being one. BLOCKED is retryable since the
+# reader-proxy fallback fetches from other IPs, so a 403 against us can still
+# succeed there.
 RETRYABLE_ERRORS = frozenset(
     {
         ProcessingError.NETWORK_ERROR,
@@ -25,6 +27,7 @@ RETRYABLE_ERRORS = frozenset(
         ProcessingError.PARSE_ERROR,
         ProcessingError.EMPTY_CONTENT,
         ProcessingError.LLM_ERROR,
+        ProcessingError.BLOCKED,
     }
 )
 

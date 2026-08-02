@@ -37,7 +37,8 @@ def test_a_url_that_fails_twice_appears_once_with_its_latest_error(tmp_path):
     records = load_failures(tmp_path)
     assert len(records) == 1
     assert records[0]["error"] == "blocked"
-    assert records[0]["retryable"] is False
+    # Blocked is retryable since the reader-proxy fallback can fetch what 403s us.
+    assert records[0]["retryable"] is True
 
 
 def test_a_torn_line_from_a_killed_run_does_not_break_the_ledger(tmp_path):

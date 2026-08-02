@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Weekly pass over the failure ledger: re-runs every retryable URL and drops
+  the ones that now succeed (sites unblock, pages come back, the reader
+  proxy gets through).
+
+  Install:
+    cp scripts/org.tylog.retry.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/org.tylog.retry.plist
+  Remove:
+    launchctl unload ~/Library/LaunchAgents/org.tylog.retry.plist
+
+  Weekly is enough: the ledger holds only URLs that already failed their
+  first retry. A collision with a running capture job is harmless — the
+  ledger rewrite keeps whatever still fails for the next pass.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>org.tylog.retry</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-lc</string>
+    <string>cd "$HOME/Nextcloud/scripts/article-pipeline" &amp;&amp; exec uv run article-pipeline --retry-failed</string>
+  </array>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Weekday</key>
+    <integer>0</integer>
+    <key>Hour</key>
+    <integer>10</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <false/>
+
+  <key>Nice</key>
+  <integer>5</integer>
+
+  <key>StandardOutPath</key>
+  <string>/Users/berloga/.article-pipeline/logs/retry.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/berloga/.article-pipeline/logs/retry.log</string>
+</dict>
+</plist>

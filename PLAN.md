@@ -63,4 +63,4 @@ engine-agnostic pipeline. Each phase has a measurable check.
 ## Phase 9 — Cutover
 - [x] README matches real behavior
 - [x] Repo pushed to GitHub (protection against sync loss)
-- [ ] Old project folders archived (deferred until Nextcloud trash restore + Phase 0 harvest are done)
+- [x] Old project folders archived (2026-08-02: moved to `~/Archive/scripts-pre-pipeline/`, 834MB out of Nextcloud)
