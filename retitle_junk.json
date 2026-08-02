@@ -1,0 +1,100 @@
+[
+ {
+  "file": "Build software better, together.typ",
+  "reason": "generic",
+  "old_title": "Build software better, together",
+  "new_title": "Уведомление о входе с другого устройства",
+  "new_file": "github.com - Уведомление о входе с другого устройства.typ"
+ },
+ {
+  "file": "habr.com - Хабр (2).typ",
+  "reason": "generic",
+  "old_title": "Хабр",
+  "new_title": "Habr: статья скрыта автором или модерацией (403)",
+  "new_file": "habr.com - Habr статья скрыта автором или модерацией 403.typ"
+ },
+ {
+  "file": "instagram.com - Instagram.typ",
+  "reason": "title-is-domain",
+  "old_title": "Instagram",
+  "new_title": "Ссылка на Instagram Reel без описания",
+  "new_file": "instagram.com - Ссылка на Instagram Reel без описания.typ"
+ },
+ {
+  "file": "url (2).typ",
+  "reason": "generic",
+  "old_title": "url",
+  "new_title": "Прощание без содержания",
+  "new_file": "youtube.com - Прощание без содержания.typ"
+ },
+ {
+  "file": "url (3).typ",
+  "reason": "generic",
+  "old_title": "url",
+  "new_title": "Комментарий без содержания: только благодарность",
+  "new_file": "youtube.com - Комментарий без содержания только.typ"
+ },
+ {
+  "file": "url (4).typ",
+  "reason": "generic",
+  "old_title": "url",
+  "new_title": "Аудиозапись без содержательной информации",
+  "new_file": "youtube.com - Аудиозапись без содержательной информации.typ"
+ },
+ {
+  "file": "url (5).typ",
+  "reason": "generic",
+  "old_title": "url",
+  "new_title": "Пост без содержания: только слова благодарности",
+  "new_file": "youtube.com - Пост без содержания только слова благодарности.typ"
+ },
+ {
+  "file": "url (6).typ",
+  "reason": "generic",
+  "old_title": "url",
+  "new_title": "Бессвязный текст: набор повторяющихся слов",
+  "new_file": "youtube.com - Бессвязный текст набор повторяющихся слов.typ"
+ },
+ {
+  "file": "url (7).typ",
+  "reason": "generic",
+  "old_title": "url",
+  "new_title": "Заглушка поста: только «Продолжение следует»",
+  "new_file": "youtube.com - Заглушка поста только Продолжение следует.typ"
+ },
+ {
+  "file": "url (8).typ",
+  "reason": "generic",
+  "old_title": "url",
+  "new_title": "Финальное прощание автора в конце видео",
+  "new_file": "youtube.com - Финальное прощание автора в конце видео.typ"
+ },
+ {
+  "file": "url (9).typ",
+  "reason": "generic",
+  "old_title": "url",
+  "new_title": "Пустой текст: повторы и слова благодарности",
+  "new_file": "youtube.com - Пустой текст повторы и слова благодарности.typ"
+ },
+ {
+  "file": "url.typ",
+  "reason": "generic",
+  "old_title": "url",
+  "new_title": "Пустой текст без содержательной информации",
+  "new_file": "youtube.com - Пустой текст без содержательной информации.typ"
+ },
+ {
+  "file": "Хабр (5).typ",
+  "reason": "generic",
+  "old_title": "Хабр",
+  "new_title": "Статья удалена модератором с Хабра",
+  "new_file": "habr.com - Статья удалена модератором с Хабра.typ"
+ },
+ {
+  "file": "Хабр.typ",
+  "reason": "generic",
+  "old_title": "Хабр",
+  "new_title": "Статья снята с публикации Хабром (403)",
+  "new_file": "habr.com - Статья снята с публикации Хабром 403.typ"
+ }
+]

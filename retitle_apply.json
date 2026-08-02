@@ -1,0 +1,352 @@
+[
+ {
+  "file": "Home.typ",
+  "reason": "too-short",
+  "old_title": "Home",
+  "new_title": "HEART-фреймворк Google: как измерять качество UX",
+  "new_file": "heartframework.com - HEART-фреймворк Google как измерять.typ"
+ },
+ {
+  "file": "threads.com - Github Projects githubprojects on Threads (1).typ",
+  "reason": "account-name-only",
+  "old_title": "Github Projects (@githubprojects) on Threads",
+  "new_title": "Maestro: YAML-фреймворк для UI-тестов без sleep",
+  "new_file": "threads.com - Maestro YAML-фреймворк для UI-тестов без sleep.typ"
+ },
+ {
+  "file": "threads.com - Github Projects githubprojects on Threads (2).typ",
+  "reason": "account-name-only",
+  "old_title": "Github Projects (@githubprojects) on Threads",
+  "new_title": "Awesome-список проектов и ресурсов по IoT",
+  "new_file": "threads.com - Awesome-список проектов и ресурсов по IoT.typ"
+ },
+ {
+  "file": "threads.com - Github Projects githubprojects on Threads (3).typ",
+  "reason": "account-name-only",
+  "old_title": "Github Projects (@githubprojects) on Threads",
+  "new_title": "Hydra Launcher: опен-сорс менеджер игровой библиотеки",
+  "new_file": "threads.com - Hydra Launcher опен-сорс менеджер игровой.typ"
+ },
+ {
+  "file": "threads.com - Github Projects githubprojects on Threads (4).typ",
+  "reason": "account-name-only",
+  "old_title": "Github Projects (@githubprojects) on Threads",
+  "new_title": "Search-R1: RL-обучение LLM работе с поиском",
+  "new_file": "threads.com - Search-R1 RL-обучение LLM работе с поиском.typ"
+ },
+ {
+  "file": "threads.com - Github Projects githubprojects on Threads.typ",
+  "reason": "account-name-only",
+  "old_title": "Github Projects (@githubprojects) on Threads",
+  "new_title": "Tabby — терминал, SSH и serial-клиент в одном",
+  "new_file": "threads.com - Tabby терминал SSH и serial-клиент в одном.typ"
+ },
+ {
+  "file": "threads.com - Life at Meta lifeatmeta on Threads.typ",
+  "reason": "account-name-only",
+  "old_title": "Life at Meta (@lifeatmeta) on Threads",
+  "new_title": "Meta открыла дизайн-систему Astryx для ИИ",
+  "new_file": "threads.com - Meta открыла дизайн-систему Astryx для ИИ.typ"
+ },
+ {
+  "file": "uv.typ",
+  "reason": "too-short",
+  "old_title": "uv",
+  "new_title": "uv: быстрый менеджер пакетов Python",
+  "new_file": "docs.astral.sh - uv быстрый менеджер пакетов Python.typ"
+ },
+ {
+  "file": "x.com - Alex Prompter alex_prompter on X.typ",
+  "reason": "account-name-only",
+  "old_title": "Alex Prompter (@alex_prompter) on X",
+  "new_title": "Бесплатный план обучения AI-инженерии за 9 шагов",
+  "new_file": "x.com - Бесплатный план обучения AI-инженерии за 9 шагов.typ"
+ },
+ {
+  "file": "x.com - Artificial Analysis ArtificialAnlys on X.typ",
+  "reason": "account-name-only",
+  "old_title": "Artificial Analysis (@ArtificialAnlys) on X",
+  "new_title": "Qwen Audio 3.0 Realtime возглавила рейтинг",
+  "new_file": "x.com - Qwen Audio 3.0 Realtime возглавила рейтинг.typ"
+ },
+ {
+  "file": "x.com - Dan Kornas DanKornas on X (1).typ",
+  "reason": "account-name-only",
+  "old_title": "Dan Kornas (@DanKornas) on X",
+  "new_title": "GOT-OCR2.0: единая end-to-end OCR-модель",
+  "new_file": "x.com - GOT-OCR2.0 единая end-to-end OCR-модель.typ"
+ },
+ {
+  "file": "x.com - Dan Kornas DanKornas on X.typ",
+  "reason": "account-name-only",
+  "old_title": "Dan Kornas (@DanKornas) on X",
+  "new_title": "Swarm: экспериментальный фреймворк OpenAI для агентов",
+  "new_file": "x.com - Swarm экспериментальный фреймворк OpenAI для агентов.typ"
+ },
+ {
+  "file": "x.com - Data Science Dojo DataScienceDojo on X (1).typ",
+  "reason": "account-name-only",
+  "old_title": "Data Science Dojo (@DataScienceDojo) on X",
+  "new_title": "Loop engineering против промпт-инжиниринга",
+  "new_file": "x.com - Loop engineering против промпт-инжиниринга.typ"
+ },
+ {
+  "file": "x.com - Data Science Dojo DataScienceDojo on X.typ",
+  "reason": "account-name-only",
+  "old_title": "Data Science Dojo (@DataScienceDojo) on X",
+  "new_title": "Архитектура RAG: индексация и обработка запроса",
+  "new_file": "x.com - Архитектура RAG индексация и обработка запроса.typ"
+ },
+ {
+  "file": "x.com - GitHub Projects Community GithubProjects on X (1).typ",
+  "reason": "account-name-only",
+  "old_title": "GitHub Projects Community (@GithubProjects) on X",
+  "new_title": "MaxKB: платформа для RAG-агентов с открытым кодом",
+  "new_file": "x.com - MaxKB платформа для RAG-агентов с открытым кодом.typ"
+ },
+ {
+  "file": "x.com - GitHub Projects Community GithubProjects on X (2).typ",
+  "reason": "account-name-only",
+  "old_title": "GitHub Projects Community (@GithubProjects) on X",
+  "new_title": "OpenHands Agent Canvas: центр управления",
+  "new_file": "x.com - OpenHands Agent Canvas центр управления.typ"
+ },
+ {
+  "file": "x.com - GitHub Projects Community GithubProjects on X (3).typ",
+  "reason": "account-name-only",
+  "old_title": "GitHub Projects Community (@GithubProjects) on X",
+  "new_title": "Ratatui: фреймворк для TUI на Rust",
+  "new_file": "x.com - Ratatui фреймворк для TUI на Rust.typ"
+ },
+ {
+  "file": "x.com - GitHub Projects Community GithubProjects on X (4).typ",
+  "reason": "account-name-only",
+  "old_title": "GitHub Projects Community (@GithubProjects) on X",
+  "new_title": "Outline: self-hosted база знаний с реал-тайм редактором",
+  "new_file": "x.com - Outline self-hosted база знаний с реал-тайм.typ"
+ },
+ {
+  "file": "x.com - GitHub Projects Community GithubProjects on X (5).typ",
+  "reason": "account-name-only",
+  "old_title": "GitHub Projects Community (@GithubProjects) on X",
+  "new_title": "Koheesio: фреймворк для пайплайнов данных на Python",
+  "new_file": "x.com - Koheesio фреймворк для пайплайнов данных на Python.typ"
+ },
+ {
+  "file": "x.com - GitHub Projects Community GithubProjects on X (6).typ",
+  "reason": "account-name-only",
+  "old_title": "GitHub Projects Community (@GithubProjects) on X",
+  "new_title": "Litho: ИИ-генератор C4-документации из кода",
+  "new_file": "x.com - Litho ИИ-генератор C4-документации из кода.typ"
+ },
+ {
+  "file": "x.com - GitHub Projects Community GithubProjects on X (7).typ",
+  "reason": "account-name-only",
+  "old_title": "GitHub Projects Community (@GithubProjects) on X",
+  "new_title": "FlashDB: лёгкая embedded БД для IoT-устройств",
+  "new_file": "x.com - FlashDB лёгкая embedded БД для IoT-устройств.typ"
+ },
+ {
+  "file": "x.com - GitHub Projects Community GithubProjects on X (8).typ",
+  "reason": "account-name-only",
+  "old_title": "GitHub Projects Community (@GithubProjects) on X",
+  "new_title": "Kaneo: минималистичный self-hosted трекер задач",
+  "new_file": "x.com - Kaneo минималистичный self-hosted трекер задач.typ"
+ },
+ {
+  "file": "x.com - GitHub Projects Community GithubProjects on X.typ",
+  "reason": "account-name-only",
+  "old_title": "GitHub Projects Community (@GithubProjects) on X",
+  "new_title": "Awesome Harness Engineering: гайд по обвязке AI-агентов",
+  "new_file": "x.com - Awesome Harness Engineering гайд по обвязке.typ"
+ },
+ {
+  "file": "x.com - Kirk Borne KirkDBorne on X (1).typ",
+  "reason": "account-name-only",
+  "old_title": "Kirk Borne (@KirkDBorne) on X",
+  "new_title": "64 слайда о Python-библиотеках для данных и ML",
+  "new_file": "x.com - 64 слайда о Python-библиотеках для данных и ML.typ"
+ },
+ {
+  "file": "x.com - Kirk Borne KirkDBorne on X (2).typ",
+  "reason": "account-name-only",
+  "old_title": "Kirk Borne (@KirkDBorne) on X",
+  "new_title": "Как создать и дообучить малую языковую модель",
+  "new_file": "x.com - Как создать и дообучить малую языковую модель.typ"
+ },
+ {
+  "file": "x.com - Kirk Borne KirkDBorne on X.typ",
+  "reason": "account-name-only",
+  "old_title": "Kirk Borne (@KirkDBorne) on X",
+  "new_title": "Твит со ссылкой на PDF-книгу на 856 страниц",
+  "new_file": "x.com - Твит со ссылкой на PDF-книгу на 856 страниц.typ"
+ },
+ {
+  "file": "x.com - Pietro Schirano skirano on X.typ",
+  "reason": "account-name-only",
+  "old_title": "Pietro Schirano (@skirano) on X",
+  "new_title": "J-Space: скрытое рабочее пространство Claude",
+  "new_file": "x.com - J-Space скрытое рабочее пространство Claude.typ"
+ },
+ {
+  "file": "x.com - Priyanka Vergadia pvergadia on X.typ",
+  "reason": "account-name-only",
+  "old_title": "Priyanka Vergadia (@pvergadia) on X",
+  "new_title": "14-минутное видео о RAG: от основ до Graph RAG",
+  "new_file": "x.com - 14-минутное видео о RAG от основ до Graph RAG.typ"
+ },
+ {
+  "file": "x.com - Python Developer PythonDvz on X.typ",
+  "reason": "account-name-only",
+  "old_title": "Python Developer (@PythonDvz) on X",
+  "new_title": "Обзор Python-библиотек по 8 категориям задач",
+  "new_file": "x.com - Обзор Python-библиотек по 8 категориям задач.typ"
+ },
+ {
+  "file": "x.com - Python Programming PythonPr on X.typ",
+  "reason": "account-name-only",
+  "old_title": "Python Programming (@PythonPr) on X",
+  "new_title": "Как устроена сверточная нейронная сеть (CNN)",
+  "new_file": "x.com - Как устроена сверточная нейронная сеть CNN.typ"
+ },
+ {
+  "file": "x.com - Tom Dörr tom_doerr on X (1).typ",
+  "reason": "account-name-only",
+  "old_title": "Tom Dörr (@tom_doerr) on X",
+  "new_title": "Мультисимвольный торговый бот с бэктестингом",
+  "new_file": "x.com - Мультисимвольный торговый бот с бэктестингом.typ"
+ },
+ {
+  "file": "x.com - Tom Dörr tom_doerr on X (2).typ",
+  "reason": "account-name-only",
+  "old_title": "Tom Dörr (@tom_doerr) on X",
+  "new_title": "Настоящий прорыв — в массовой доступности",
+  "new_file": "x.com - Настоящий прорыв в массовой доступности.typ"
+ },
+ {
+  "file": "x.com - Tom Dörr tom_doerr on X (3).typ",
+  "reason": "account-name-only",
+  "old_title": "Tom Dörr (@tom_doerr) on X",
+  "new_title": "Markdown Task Manager: файлы в Kanban-доску",
+  "new_file": "x.com - Markdown Task Manager файлы в Kanban-доску.typ"
+ },
+ {
+  "file": "x.com - Tom Dörr tom_doerr on X.typ",
+  "reason": "account-name-only",
+  "old_title": "Tom Dörr (@tom_doerr) on X",
+  "new_title": "Codexia: Tauri-приложение объединяет Codex CLI и",
+  "new_file": "x.com - Codexia Tauri-приложение объединяет Codex CLI и.typ"
+ },
+ {
+  "file": "x.com - X Freeze XFreeze on X.typ",
+  "reason": "account-name-only",
+  "old_title": "X Freeze (@XFreeze) on X",
+  "new_title": "Grok 4.5 обошёл Claude и GPT-5.6 в бенчмарке HighWalk",
+  "new_file": "x.com - Grok 4.5 обошёл Claude и GPT-5.6 в бенчмарке.typ"
+ },
+ {
+  "file": "x.com - XDA xdadevelopers on X (1).typ",
+  "reason": "account-name-only",
+  "old_title": "XDA (@xdadevelopers) on X",
+  "new_title": "Ubuntu на Android как инструмент для управления homelab",
+  "new_file": "x.com - Ubuntu на Android как инструмент для управления.typ"
+ },
+ {
+  "file": "x.com - XDA xdadevelopers on X (2).typ",
+  "reason": "account-name-only",
+  "old_title": "XDA (@xdadevelopers) on X",
+  "new_title": "5 проектов на ESP32 для новичков за вечер",
+  "new_file": "x.com - 5 проектов на ESP32 для новичков за вечер.typ"
+ },
+ {
+  "file": "x.com - XDA xdadevelopers on X.typ",
+  "reason": "account-name-only",
+  "old_title": "XDA (@xdadevelopers) on X",
+  "new_title": "Как я настраиваю Claude Code под проект",
+  "new_file": "x.com - Как я настраиваю Claude Code под проект.typ"
+ },
+ {
+  "file": "x.com - elvis omarsar0 on X.typ",
+  "reason": "account-name-only",
+  "old_title": "elvis (@omarsar0) on X",
+  "new_title": "PaperWiki: агентная LLM-вики для научных статей",
+  "new_file": "x.com - PaperWiki агентная LLM-вики для научных статей.typ"
+ },
+ {
+  "file": "x.com - freeCodeCamp.org freeCodeCamp on X (1).typ",
+  "reason": "account-name-only",
+  "old_title": "freeCodeCamp.org (@freeCodeCamp) on X",
+  "new_title": "Курс по командной строке для новичков",
+  "new_file": "x.com - Курс по командной строке для новичков.typ"
+ },
+ {
+  "file": "x.com - freeCodeCamp.org freeCodeCamp on X (2).typ",
+  "reason": "account-name-only",
+  "old_title": "freeCodeCamp.org (@freeCodeCamp) on X",
+  "new_title": "Пять реализаций «Камень-ножницы-бумага» на JS",
+  "new_file": "x.com - Пять реализаций Камень-ножницы-бумага на JS.typ"
+ },
+ {
+  "file": "x.com - freeCodeCamp.org freeCodeCamp on X (3).typ",
+  "reason": "account-name-only",
+  "old_title": "freeCodeCamp.org (@freeCodeCamp) on X",
+  "new_title": "Курс по соревнованиям Data Science на Kaggle",
+  "new_file": "x.com - Курс по соревнованиям Data Science на Kaggle.typ"
+ },
+ {
+  "file": "x.com - freeCodeCamp.org freeCodeCamp on X (4).typ",
+  "reason": "account-name-only",
+  "old_title": "freeCodeCamp.org (@freeCodeCamp) on X",
+  "new_title": "Как на самом деле работает асинхронность в Dart",
+  "new_file": "x.com - Как на самом деле работает асинхронность в Dart.typ"
+ },
+ {
+  "file": "x.com - freeCodeCamp.org freeCodeCamp on X (5).typ",
+  "reason": "account-name-only",
+  "old_title": "freeCodeCamp.org (@freeCodeCamp) on X",
+  "new_title": "Что такое JSON Schema и валидация JSON",
+  "new_file": "x.com - Что такое JSON Schema и валидация JSON.typ"
+ },
+ {
+  "file": "x.com - freeCodeCamp.org freeCodeCamp on X (6).typ",
+  "reason": "account-name-only",
+  "old_title": "freeCodeCamp.org (@freeCodeCamp) on X",
+  "new_title": "Гайд по Go: от установки до структур",
+  "new_file": "x.com - Гайд по Go от установки до структур.typ"
+ },
+ {
+  "file": "x.com - freeCodeCamp.org freeCodeCamp on X (7).typ",
+  "reason": "account-name-only",
+  "old_title": "freeCodeCamp.org (@freeCodeCamp) on X",
+  "new_title": "Руководство по написанию чистого кода",
+  "new_file": "x.com - Руководство по написанию чистого кода.typ"
+ },
+ {
+  "file": "x.com - freeCodeCamp.org freeCodeCamp on X.typ",
+  "reason": "account-name-only",
+  "old_title": "freeCodeCamp.org (@freeCodeCamp) on X",
+  "new_title": "Как настроить Claude Code для Flutter-разработки",
+  "new_file": "x.com - Как настроить Claude Code для Flutter-разработки.typ"
+ },
+ {
+  "file": "x.com - Хабр habr_com on X.typ",
+  "reason": "account-name-only",
+  "old_title": "Хабр (@habr_com) on X",
+  "new_title": "LLM на 28,9 млн параметров запущена на ESP32-S3",
+  "new_file": "x.com - LLM на 289 млн параметров запущена на ESP32-S3.typ"
+ },
+ {
+  "file": "Хабр (2).typ",
+  "reason": "generic",
+  "old_title": "Хабр",
+  "new_title": "Локальный ИИ-ассистент умного дома на Xperia XZ1",
+  "new_file": "habr.com - Локальный ИИ-ассистент умного дома на Xperia XZ1.typ"
+ },
+ {
+  "file": "Хабр (3).typ",
+  "reason": "generic",
+  "old_title": "Хабр",
+  "new_title": "Простая локальная система учёта лекарств и еды",
+  "new_file": "habr.com - Простая локальная система учёта лекарств и еды.typ"
+ }
+]
