@@ -1,6 +1,6 @@
 [project]
 name = "article-pipeline"
-version = "0.1.0"
+version = "0.2.0"
 description = "Article processor: URL inbox -> local LLM (ollama/oMLX/claude/codex) -> Logseq markdown or TyLog Typst notes"
 readme = "README.md"
 requires-python = ">=3.11"
