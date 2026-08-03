@@ -30,11 +30,18 @@ class HttpEngine:
         api_key: str,
         timeout_seconds: float,
         transport: httpx.BaseTransport | None = None,
+        json_mode: bool = True,
     ):
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.timeout_seconds = timeout_seconds
         self._transport = transport  # injected in tests via httpx.MockTransport
+        # json_mode=False skips response_format entirely. oMLX's json_object
+        # grammar constraint makes reasoning models degenerate (they cannot
+        # emit their thinking preamble and produce junk like '[2025]',
+        # reliably on Cyrillic prompts) — callers extract the JSON from the
+        # prose instead (stage2's extract_json_object).
+        self.json_mode = json_mode
 
     def _client(self) -> httpx.Client:
         return httpx.Client(timeout=self.timeout_seconds, transport=self._transport)
@@ -52,14 +59,17 @@ class HttpEngine:
     def chat_json(
         self, prompt: str, model: str, temperature: float, max_tokens: int = 2048
     ) -> str:
-        # max_tokens caps runaway generation (oMLX's server default is 65k)
+        # max_tokens caps runaway generation (oMLX's server default is 65k).
+        # Without json_mode the answer arrives after a thinking preamble, so
+        # the cap must leave room for both.
         payload = {
             "model": model,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": temperature,
-            "max_tokens": max_tokens,
-            "response_format": {"type": "json_object"},
+            "max_tokens": max_tokens if self.json_mode else max(max_tokens, 8192),
         }
+        if self.json_mode:
+            payload["response_format"] = {"type": "json_object"}
         with self._client() as client:
             resp = client.post(
                 f"{self.base_url}/chat/completions", headers=self._headers(), json=payload
@@ -175,7 +185,9 @@ def make_engine(cfg: Config):
     if provider == "ollama":
         return HttpEngine("http://localhost:11434/v1", "ollama", timeout)
     if provider == "omlx":
-        return HttpEngine("http://127.0.0.1:8000/v1", read_omlx_api_key(), timeout)
+        return HttpEngine(
+            "http://127.0.0.1:8000/v1", read_omlx_api_key(), timeout, json_mode=False
+        )
     if provider in ("claude", "codex"):
         return CliEngine(provider, timeout)
     raise ValueError(f"unknown or unset engine provider: {provider!r}")

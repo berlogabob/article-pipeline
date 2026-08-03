@@ -225,3 +225,25 @@ def test_cli_engine_strips_no_think_prefix(monkeypatch):
     sent_prompt = next(a for a in captured["cmd"] if "Actual prompt" in a)
     assert not sent_prompt.lstrip().startswith("/")
     assert "/no_think" not in sent_prompt
+
+
+def test_http_engine_json_mode_off_skips_response_format_and_raises_cap():
+    """oMLX reasoning models degenerate under the json_object grammar (junk
+    like '[2025]' on Cyrillic prompts), so the omlx engine turns it off and
+    leaves token room for the thinking preamble."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        import json
+
+        payload = json.loads(request.read())
+        assert "response_format" not in payload
+        assert payload["max_tokens"] == 8192
+        return httpx.Response(
+            200, json={"choices": [{"message": {"content": 'thinking... {"ok": 1}'}}]}
+        )
+
+    transport = httpx.MockTransport(handler)
+    eng = HttpEngine(
+        "http://127.0.0.1:8000/v1", "key", 5, transport=transport, json_mode=False
+    )
+    assert eng.chat_json("say hi", "m", 0.05) == 'thinking... {"ok": 1}'
