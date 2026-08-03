@@ -355,11 +355,22 @@ def _fetch_and_extract_article(
         raise
     if not html:
         return fetch_reader_article(url, timeout=timeout)
+    if html.startswith("%PDF"):
+        # An extensionless PDF link (arxiv.org/pdf/...): not our job — stage1
+        # sniffs the magic bytes and extracts locally with pypdf.
+        return None
 
     text = extract_text_from_html(html, include_images=True)
     title = extract_title_from_html(html)
     canonical_url = extract_canonical_url_from_html(html)
     if text is None:
+        # Social hosts serve a JS shell whose og:description is only the
+        # first post. The reader proxy renders the full thread, so it goes
+        # first; the metadata stub remains the fallback, not the terminus.
+        if _is_social_host(url):
+            reader_article = fetch_reader_article(url, timeout=timeout)
+            if reader_article:
+                return reader_article
         fallback_article = _metadata_fallback_article(
             url,
             html,
@@ -606,6 +617,13 @@ def fetch_reddit_post_article(url: str, timeout: int = 15) -> Optional[Extracted
         "title": title or "Reddit post",
         "canonical_url": canonical,
     }
+
+
+_SOCIAL_HOSTS = {"x.com", "twitter.com", "threads.com", "threads.net", "instagram.com"}
+
+
+def _is_social_host(url: str) -> bool:
+    return urlparse(url).netloc.lower().removeprefix("www.") in _SOCIAL_HOSTS
 
 
 def _resolve_final_url(url: str, timeout: int = 15) -> str:

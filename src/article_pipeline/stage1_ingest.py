@@ -6,6 +6,7 @@ from typing import List, NotRequired, Optional, Tuple, TypedDict
 from .errors import FetchError, ProcessingError, validate_url
 from .net import expand_url, get_domain, normalize_url
 from .html_parser import extract_image_urls, fetch_and_extract_article
+from .pdf import fetch_pdf_article, looks_like_pdf_url
 from .youtube import (
     YouTubePlaylistVideo,
     get_youtube_playlist_metadata,
@@ -95,9 +96,23 @@ def ingest_article(
                 canonical_url = video_metadata["canonical_url"]
                 final_url = canonical_url
                 metadata_only = True
+        elif looks_like_pdf_url(final_url):
+            pdf = fetch_pdf_article(final_url)
+            if pdf is None:
+                return None, ProcessingError.PARSE_ERROR
+            extracted = pdf["text"]
+            resolved_title = pdf["title"]
+            canonical_url = pdf["canonical_url"]
         else:
             fetched_url = final_url
             article = fetch_and_extract_article(fetched_url)
+            if article is None:
+                # HTML extraction came up empty; the link may be an
+                # extensionless PDF (arxiv.org/pdf/...) — sniffed by magic
+                # bytes, so a non-PDF costs one refused check.
+                pdf = fetch_pdf_article(fetched_url)
+                if pdf is not None:
+                    article = pdf
             if article is None:
                 logger.error("Extraction failed: %s", fetched_url[:80])
                 return None, ProcessingError.PARSE_ERROR

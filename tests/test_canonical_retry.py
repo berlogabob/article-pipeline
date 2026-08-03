@@ -124,7 +124,11 @@ def test_a_js_only_page_is_captured_from_open_graph_tags():
         site="Threads",
         url="https://www.threads.com/@githubprojects/post/DaNH5",
     )
-    with patch("article_pipeline.html_parser.fetch_html", return_value=page):
+    # Social hosts consult the reader proxy first now; og: tags are the
+    # fallback when it comes up empty.
+    with patch("article_pipeline.html_parser.fetch_html", return_value=page), patch(
+        "article_pipeline.html_parser.fetch_reader_article", return_value=None
+    ):
         article = fetch_and_extract_article("https://www.threads.com/@x/post/DaNH5")
 
     assert article is not None
