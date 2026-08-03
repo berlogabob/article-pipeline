@@ -15,6 +15,7 @@ from .metadata import (
     METADATA_JSON_KEYS,
     ArticleMetadata,
     build_prompt,
+    constrain_tags,
     normalize_tags,
 )
 from .net import clean_json
@@ -92,7 +93,7 @@ def summarize(
                 logger.info("LLM call: model=%s temp=%.2f", model or "(default)", temp)
                 raw = engine.chat_json(prompt, model, temp)
                 meta = ArticleMetadata.model_validate(extract_json_object(raw))
-                meta.tags = normalize_tags(meta.tags)
+                meta.tags = normalize_tags(constrain_tags(meta.tags, vocabulary))
                 return meta
             except (ValidationError, ValueError, json.JSONDecodeError):
                 logger.warning("Invalid JSON from %s (temp=%.2f), retrying", model, temp)

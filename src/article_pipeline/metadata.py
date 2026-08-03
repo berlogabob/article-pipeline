@@ -36,10 +36,11 @@ def build_vocabulary_section(vocabulary: Optional[List[str]]) -> str:
     if not vocabulary:
         return ""
     return (
-        "\nСловарь тегов библиотеки (используй существующий тег, если он подходит "
-        "по смыслу):\n"
+        "\nСловарь тегов библиотеки:\n"
         + ", ".join(vocabulary)
-        + "\nНовый тег придумывай только если ни один существующий не описывает тему.\n"
+        + "\nВыбирай теги ТОЛЬКО из этого словаря. Разрешается не более ОДНОГО "
+        "нового тега, и только если ни один тег словаря не описывает тему. "
+        "Лишние новые теги будут отброшены.\n"
     )
 
 
@@ -105,6 +106,28 @@ def normalize_tag(tag: str) -> str:
         cleaned = cleaned[2:-2].strip()
     cleaned = re.sub(r"[\s_]+", "-", cleaned)
     return cleaned.strip("-").lower()
+
+
+def constrain_tags(tags: List[str], vocabulary: Optional[List[str]]) -> List[str]:
+    """Keep vocabulary tags plus at most one new tag.
+
+    Prompt-level advice measurably failed (78% of vault tags were
+    singletons), so the vocabulary is enforced here: minted tags beyond the
+    first are dropped. Comparison is on normalized forms, matching how the
+    app clusters. With no vocabulary (young vault), tags pass through.
+    """
+    if not vocabulary:
+        return tags
+    vocab = {normalize_tag(v) for v in vocabulary}
+    kept: List[str] = []
+    minted = 0
+    for tag in tags:
+        if normalize_tag(tag) in vocab:
+            kept.append(tag)
+        elif minted == 0:
+            kept.append(tag)
+            minted = 1
+    return kept or tags[:3]
 
 
 def normalize_tags(tags: List[str]) -> List[str]:

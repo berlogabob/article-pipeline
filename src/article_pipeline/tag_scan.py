@@ -64,7 +64,7 @@ def _index_notes(vault_dir: Path) -> List[dict]:
     return []
 
 
-def vocabulary(vault_dir: Path, min_notes: int = 5, limit: int = 200) -> List[str]:
+def vocabulary(vault_dir: Path, min_notes: int = 5, limit: int = 400) -> List[str]:
     """The vault's established tags, most-used first.
 
     Read from `_index/index.json` rather than by scanning headers, because the

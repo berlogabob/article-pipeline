@@ -14,8 +14,10 @@ from typing import Dict, List, Optional, Tuple
 from .metadata import ArticleMetadata, FALLBACK_GUIDANCE
 from .tag_scan import VaultNote
 
-# tylog_import_core escape set
-_ESCAPE_CHARS = set('\\#$*_`<>@[]~=-+/')
+# tylog_import_core escape set, plus ( and ): a raw ( directly after an
+# emitted #strong[..]/#link(..)[..] parses as another argument list —
+# `**PyGhidra**(биндинг)` broke whole notes before parens were escaped.
+_ESCAPE_CHARS = set('\\#$*_`<>@[]~=-+/()')
 
 # Owns the generated "== Related" block. TypstSeq's stripAutoRelated
 # (lib/app_mobile.dart) cuts from this marker line to end-of-file, so a
@@ -109,22 +111,32 @@ def _render_inline(text: str, image_map: Dict[str, str]) -> str:
     pos = 0
     for m in _INLINE_TOKEN_RE.finditer(text):
         out.append(escape_markup(text[pos:m.start()]))
+        emitted_call = False
         if m.group("code"):
             out.append(m.group("code"))  # typst inline raw shares backtick syntax
         elif m.group("image"):
             local = image_map.get(m.group("img_url"))
             if local:
                 out.append(f'#image({_typst_string(local)})')
+                emitted_call = True
             elif m.group("img_alt"):
                 out.append(escape_markup(m.group("img_alt")))
         elif m.group("link"):
             url = m.group("link_url")
             label = _render_inline(m.group("link_text"), image_map)
             out.append(f"#link({_typst_string(url)})[{label}]")
+            emitted_call = True
         elif m.group("bold"):
             out.append(f"#strong[{escape_markup(m.group('bold_text'))}]")
+            emitted_call = True
         elif m.group("italic"):
             out.append(f"#emph[{escape_markup(m.group('italic_text'))}]")
+            emitted_call = True
+        # Text touching the call would be parsed as more Typst code —
+        # `[Схема](url).pdf` becomes field access on the link element.
+        # A `;` terminates the hash expression explicitly.
+        if emitted_call and text[m.end() : m.end() + 1] not in ("", " ", "\t"):
+            out.append(";")
         pos = m.end()
     out.append(escape_markup(text[pos:]))
     return "".join(out)
@@ -137,16 +149,39 @@ _HR_RE = re.compile(r"^\s*([-*_])\s*(?:\1\s*){2,}$")
 
 
 def markdown_to_typst(md: str, image_map: Dict[str, str]) -> str:
+    src_lines = md.splitlines()
+    fence_indexes = [
+        i for i, l in enumerate(src_lines) if l.strip().startswith("```")
+    ]
+    # An odd fence count would invert the raw/prose state for everything
+    # after the unmatched marker — half a note rendered inside-out. Demote
+    # the last marker to plain text so the damage is one line, not the tail.
+    unpaired = fence_indexes[-1] if len(fence_indexes) % 2 else -1
+
     lines: List[str] = []
     in_fence = False
-    for line in md.splitlines():
+    fence_lang = ""
+    fence_body: List[str] = []
+    for i, line in enumerate(src_lines):
         stripped = line.rstrip()
-        if stripped.lstrip().startswith("```"):
-            in_fence = not in_fence
-            lines.append(stripped.lstrip())
+        if stripped.lstrip().startswith("```") and i != unpaired:
+            if not in_fence:
+                in_fence = True
+                fence_lang = stripped.lstrip().removeprefix("```").strip()
+                fence_body = []
+            else:
+                in_fence = False
+                # Typst ends a raw block at the next matching backtick run
+                # anywhere, so code containing ``` (this bit the vault) needs
+                # a longer delimiter than any run inside.
+                runs = re.findall(r"`+", "\n".join(fence_body))
+                delim = "`" * max(3, max((len(r) for r in runs), default=0) + 1)
+                lines.append(delim + fence_lang)
+                lines.extend(fence_body)
+                lines.append(delim)
             continue
         if in_fence:
-            lines.append(line)
+            fence_body.append(line)
             continue
         if not stripped:
             lines.append("")

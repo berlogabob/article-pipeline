@@ -163,3 +163,43 @@ def test_fallback_guidance_hidden():
         body_markdown="x",
     )
     assert "== Guidance" not in src
+
+
+def test_paren_after_bold_or_link_is_escaped():
+    from article_pipeline.stage3_render_typst import markdown_to_typst
+
+    out = markdown_to_typst("**PyGhidra**(Python-биндинг Ghidra)", {})
+    assert "#strong[PyGhidra];\\(" in out
+    out = markdown_to_typst("[label](https://a.example)(Dec 2024)", {})
+    assert ')[label];\\(' in out
+
+
+def test_unpaired_fence_is_demoted_to_text():
+    from article_pipeline.stage3_render_typst import markdown_to_typst
+
+    # Odd fence count: the unmatched marker must not invert the tail.
+    out = markdown_to_typst("```sh\n# a python comment\n", {})
+    assert "```" not in out.splitlines()[0] or out.count("```") % 2 == 0
+    assert "== a python comment" in out  # rendered as prose, not raw
+
+    # Balanced fences still pass through raw.
+    out = markdown_to_typst("```sh\n# raw\n```\nafter", {})
+    assert "# raw" in out and "\\# raw" not in out
+
+
+def test_text_touching_a_link_gets_a_terminator():
+    from article_pipeline.stage3_render_typst import markdown_to_typst
+
+    out = markdown_to_typst("[Схема](https://a.example/s).pdf", {})
+    assert '].pdf' not in out
+    assert '];\\.pdf' in out or '];.pdf' in out
+
+
+def test_backticks_inside_fence_get_longer_delimiter():
+    from article_pipeline.stage3_render_typst import markdown_to_typst
+
+    out = markdown_to_typst('```python\nx = "```" in prompt\n```\nafter', {})
+    first = out.splitlines()[0]
+    assert first.startswith("````")  # longer than the inner run
+    assert out.splitlines()[1] == 'x = "```" in prompt'
+    assert "after" in out

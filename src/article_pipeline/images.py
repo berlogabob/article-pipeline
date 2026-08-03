@@ -45,6 +45,18 @@ def _extension_from_url(url: str) -> str:
     return _DEFAULT_EXTENSION
 
 
+def _extension_from_magic(data: bytes) -> str | None:
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return ".png"
+    if data.startswith(b"\xff\xd8\xff"):
+        return ".jpg"
+    if data.startswith(b"GIF8"):
+        return ".gif"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return ".webp"
+    return None
+
+
 def download_images(
     image_urls: List[str],
     dest_dir: Path,
@@ -118,9 +130,16 @@ def download_images(
                     )
                     continue
 
+                data = b"".join(chunks)
+                # Typst decodes by extension, so trust the bytes over the
+                # server: a PNG served from a .jpg URL must be saved .png.
+                sniffed = _extension_from_magic(data)
+                if sniffed:
+                    ext = sniffed
+
                 dest_dir.mkdir(parents=True, exist_ok=True)
                 dest_path = dest_dir / f"{index}{ext}"
-                dest_path.write_bytes(b"".join(chunks))
+                dest_path.write_bytes(data)
                 written.append(dest_path)
                 logger.info("Downloaded image: %s -> %s", url[:100], dest_path)
             finally:

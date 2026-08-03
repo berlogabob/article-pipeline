@@ -1,6 +1,8 @@
 """Per-article orchestration: ingest -> summarize -> render (markdown or typst)."""
 
 import logging
+import shutil
+import subprocess
 from pathlib import Path
 from typing import List, Optional, Set, Tuple
 
@@ -19,6 +21,33 @@ from .youtube import YouTubePlaylistVideo
 logger = logging.getLogger("article_pipeline")
 
 _md_url_cache: Optional[Set[str]] = None
+
+
+def typst_compile_error(vault: Path, note_path: Path, timeout: int = 120) -> Optional[str]:
+    """Compile the note against the vault root; return stderr on failure.
+
+    Returns None when the note compiles — or when no `typst` binary is on
+    PATH, in which case the gate silently passes rather than blocking the
+    pipeline on a missing dev tool.
+    """
+    typst = shutil.which("typst")
+    if not typst:
+        return None
+    if not (vault / "_system" / "tylog.typ").exists():
+        # A vault without the package (fresh or test vault) would fail every
+        # note on the import line — that is not the note's fault.
+        return None
+    try:
+        proc = subprocess.run(
+            [typst, "compile", "--root", str(vault), str(note_path), "-"],
+            capture_output=True,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return "typst compile timed out"
+    if proc.returncode == 0:
+        return None
+    return proc.stderr.decode("utf-8", errors="replace")
 
 
 def _markdown_already_processed(url: str, folder: Path) -> bool:
@@ -105,7 +134,11 @@ def process_article(
                 max_images=cfg.typst.max_images_per_article,
                 max_bytes=cfg.typst.max_image_bytes,
             )
-            for orig, local in zip(ingest["image_urls"], saved):
+            # Saved files are named by 1-based position in image_urls, and
+            # failures are skipped — zip() would misattribute every image
+            # after the first gap, so map back through the filename stem.
+            for local in saved:
+                orig = ingest["image_urls"][int(local.stem) - 1]
                 image_map[orig] = f"/{cfg.typst.assets_subdir}/{nid}/{local.name}"
 
         related = []
@@ -149,6 +182,20 @@ def process_article(
             _md_url_cache.add(ingest["normalized_url"])
 
     out_path.write_text(content, encoding="utf-8")
+
+    if cfg.output_format == "typst":
+        # A note the app cannot render is worse than a recorded failure —
+        # 6 of 228 notes had shipped broken before this gate existed.
+        compile_err = typst_compile_error(vault, out_path)
+        if compile_err:
+            out_path.unlink()
+            logger.error(
+                "Rendered note does not compile, dropped: %s\n%s",
+                out_path.name,
+                compile_err[:500],
+            )
+            return False, ProcessingError.PARSE_ERROR
+
     logger.info("Saved: %s", out_path.name)
 
     playlist_videos = ingest.get("playlist_videos") or []

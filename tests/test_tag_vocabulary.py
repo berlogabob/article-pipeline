@@ -66,7 +66,7 @@ def test_a_missing_or_corrupt_index_yields_no_vocabulary(tmp_path):
 def test_the_prompt_carries_the_vocabulary_and_the_instruction():
     section = build_vocabulary_section(["ai", "python"])
     assert "ai, python" in section
-    assert "Новый тег" in section, "the model must be told when NOT to reuse"
+    assert "ОДНОГО" in section, "the model must be told minting is capped at one"
 
     prompt = build_prompt("body text", vocabulary=["ai", "python"])
     assert "ai, python" in prompt
@@ -111,3 +111,14 @@ def test_the_index_wins_over_a_donor_when_both_exist(tmp_path):
     )
 
     assert vocabulary(vault) == ["из-индекса"]
+
+
+def test_constrain_tags_allows_vocab_plus_one_minted():
+    from article_pipeline.metadata import constrain_tags
+
+    vocab = ["LLM", "Python", "open-source"]
+    tags = ["llm", "новый-тег-1", "Python", "новый-тег-2", "новый-тег-3"]
+    assert constrain_tags(tags, vocab) == ["llm", "новый-тег-1", "Python"]
+    # No vocabulary -> pass-through; all-minted -> keep first three.
+    assert constrain_tags(tags, None) == tags
+    assert constrain_tags(["a", "b", "c", "d"], ["Z"]) == ["a"]
