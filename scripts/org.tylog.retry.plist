@@ -23,7 +23,7 @@
   <array>
     <string>/bin/bash</string>
     <string>-lc</string>
-    <string>cd "$HOME/Nextcloud/scripts/article-pipeline" &amp;&amp; exec uv run article-pipeline --retry-failed</string>
+    <string>cd "$HOME/Nextcloud/scripts/article-pipeline" &amp;&amp; uv run article-pipeline --retry-failed; exec uv run python scripts/build_digest.py "$HOME/Nextcloud/TyLogVault"</string>
   </array>
 
   <key>StartCalendarInterval</key>
