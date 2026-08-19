@@ -1,4 +1,5 @@
 import subprocess
+from pathlib import Path
 
 import httpx
 import pytest
@@ -98,8 +99,9 @@ def test_cli_engine_claude_command_assembled(monkeypatch):
     result = eng.chat_json("say hi", "sonnet", 0.05)
 
     assert result == '{"ok": true}'
-    assert captured["cmd"] == [
-        "claude",
+    # cmd[0] is an absolute path when the binary is resolvable (launchd fix).
+    assert Path(captured["cmd"][0]).name == "claude"
+    assert captured["cmd"][1:] == [
         "-p",
         "say hi",
         "--model",
@@ -123,7 +125,8 @@ def test_cli_engine_claude_omits_model_flag_when_empty(monkeypatch):
     eng.chat_json("say hi", "", 0.05)
 
     assert "--model" not in captured["cmd"]
-    assert captured["cmd"] == ["claude", "-p", "say hi", "--output-format", "text"]
+    assert Path(captured["cmd"][0]).name == "claude"
+    assert captured["cmd"][1:] == ["-p", "say hi", "--output-format", "text"]
 
 
 def test_cli_engine_codex_command_assembled(monkeypatch, tmp_path):
@@ -144,7 +147,8 @@ def test_cli_engine_codex_command_assembled(monkeypatch, tmp_path):
 
     assert result == '{"ok": true}'
     cmd = captured["cmd"]
-    assert cmd[:4] == ["codex", "exec", "-s", "read-only"]
+    assert Path(cmd[0]).name == "codex"
+    assert cmd[1:4] == ["exec", "-s", "read-only"]
     assert "-m" in cmd and cmd[cmd.index("-m") + 1] == "o4-mini"
     assert "--output-last-message" in cmd
     assert cmd[-1] == "say hi"

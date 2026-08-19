@@ -7,6 +7,7 @@ Both flavors expose the same interface:
 
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -85,6 +86,21 @@ class HttpEngine:
             return data["choices"][0]["message"]["content"]
 
 
+def _resolve_binary(name: str) -> str:
+    """Absolute path to a CLI that may live outside launchd's PATH."""
+    found = shutil.which(name)
+    if found:
+        return found
+    candidates = [Path.home() / ".local" / "bin" / name]
+    candidates += sorted(
+        Path.home().glob(f".nvm/versions/node/*/bin/{name}"), reverse=True
+    )
+    for c in candidates:
+        if c.exists():
+            return str(c)
+    return name  # let subprocess produce the usual FileNotFoundError
+
+
 class CliEngine:
     """CLI-driven engine (claude, codex), one-shot subprocess per call."""
 
@@ -93,6 +109,10 @@ class CliEngine:
             raise ValueError(f"unsupported CLI provider: {provider}")
         self.provider = provider
         self.timeout_seconds = timeout_seconds
+        # launchd jobs run with a PATH that misses ~/.local/bin (claude) and
+        # nvm's bin (codex); a bare name raised FileNotFoundError on every
+        # call for days and silently filled the failure ledger.
+        self.binary = _resolve_binary(provider)
 
     def list_models(self) -> list[str]:
         if self.provider == "claude":
@@ -130,7 +150,7 @@ class CliEngine:
         return result.stdout
 
     def _chat_claude(self, prompt: str, model: str) -> str:
-        cmd = ["claude", "-p", prompt]
+        cmd = [self.binary, "-p", prompt]
         if model:
             cmd += ["--model", model]
         cmd += ["--output-format", "text"]
@@ -142,7 +162,7 @@ class CliEngine:
         ) as tmp:
             tmp_path = tmp.name
         try:
-            cmd = ["codex", "exec", "-s", "read-only"]
+            cmd = [self.binary, "exec", "-s", "read-only"]
             if model:
                 cmd += ["-m", model]
             cmd += ["--output-last-message", tmp_path, prompt]

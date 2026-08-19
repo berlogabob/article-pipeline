@@ -140,3 +140,25 @@ def test_an_all_clear_retry_removes_the_ledger(tmp_path):
 
 def test_retry_on_an_empty_ledger_is_a_no_op(tmp_path):
     assert retry_failures(tmp_path, Config(), engine=None) == (0, 0)
+
+
+def test_a_crash_mid_retry_loses_at_most_twenty_urls_of_progress(tmp_path):
+    """The 2026-08-19 flush: a pass over 3781 URLs died before the end-of-run
+    rewrite, so the next pass re-fetched and re-summarized all of them."""
+    import pytest
+
+    urls = [f"https://a.example/{i:02d}" for i in range(25)]
+    for url in urls:
+        _record(tmp_path, url, ProcessingError.PARSE_ERROR)
+
+    def fake_process(url, title, cfg, engine, force=False):
+        if url == urls[22]:
+            raise RuntimeError("machine went to sleep")
+        return True, ProcessingError.UNKNOWN
+
+    with patch("article_pipeline.processor.process_article", side_effect=fake_process):
+        with pytest.raises(RuntimeError):
+            retry_failures(tmp_path, Config(), engine=None)
+
+    left = [r["url"] for r in load_failures(tmp_path)]
+    assert left == urls[20:], "the checkpoint at 20 must survive the crash"

@@ -1,9 +1,11 @@
 """Per-article orchestration: ingest -> summarize -> render (markdown or typst)."""
 
 import logging
+import re
 import shutil
 import subprocess
 from pathlib import Path
+from urllib.parse import urlparse
 from typing import List, Optional, Set, Tuple
 
 from .config import Config
@@ -21,6 +23,56 @@ from .youtube import YouTubePlaylistVideo
 logger = logging.getLogger("article_pipeline")
 
 _md_url_cache: Optional[Set[str]] = None
+
+# On 2026-08-19 a backlog flush wrote hundreds of error pages into the vault
+# as "articles" — 404s summarized in earnest, tagged "ошибка", and auto-related
+# to each other. A page that only says the content is gone is not an article.
+# ponytail: pattern list; add an LLM judge only if patterns miss real junk
+_JUNK_TITLE = re.compile(
+    r"(?i)(?:^\s*(?:404|403|410)\b"
+    r"|page not found|page doesn.t exist|url source|access denied"
+    r"|just a moment|account suspended|attention required"
+    r"|страница не найдена|доступ (?:ограничен|запрещ))"
+)
+_ASSET_EXT = re.compile(
+    r"(?i)\.(?:jpe?g|png|gif|webp|svg|ico|css|js|mp4|woff2?)$"
+)
+# A fetch that resolved to a site's generic shell instead of the shared page:
+# login walls, JS walls, bare homepages. Exact lowercase titles.
+_SHELL_TITLES = {
+    "sign in",
+    "log in",
+    "login",
+    "webmail login",
+    "cpanel login",
+    "google search",
+    "javascript is not available.",
+    "build software better, together",  # GitHub's homepage og:title
+    "hugging face – the ai community building the future.",
+    "verifying device",  # share.google interstitial that failed
+}
+
+
+def junk_reason(title: str, url: str) -> Optional[str]:
+    """Why this page should be a terminal failure instead of a note, or None.
+
+    Thin content is not checked here — ingest already enforces
+    cfg.content.min_length and records it as retryable EMPTY_CONTENT.
+    """
+    if _JUNK_TITLE.search(title or ""):
+        return f"error-page title: {title[:60]!r}"
+    if (title or "").strip().lower() in _SHELL_TITLES:
+        return f"site shell page: {title[:60]!r}"
+    # No blanket share.google rule: the interstitial sometimes exposes the
+    # real article to trafilatura, and those saves are genuine. The failed
+    # interstitials surface via their own titles ("Verifying Device").
+    host = urlparse(url).netloc.lower()
+    path = urlparse(url).path
+    if host.endswith("hf-mirror.com") or host == "svn.code.sf.net":
+        return f"raw mirror/repo host: {host}"
+    if _ASSET_EXT.search(path):
+        return f"raw asset URL: {path[-40:]}"
+    return None
 
 
 def typst_compile_error(vault: Path, note_path: Path, timeout: int = 120) -> Optional[str]:
@@ -87,6 +139,12 @@ def process_article(
     # and can be generic (e.g. "codex-integration-test"); prefer the title
     # resolved from the page's own HTML/metadata when we have one.
     resolved_title = ingest["resolved_title"] or title
+
+    if not force:
+        junk = junk_reason(resolved_title, final_url)
+        if junk:
+            logger.info("Junk page (%s), recorded as not_found: %s", junk, final_url[:80])
+            return False, ProcessingError.NOT_FOUND
 
     tag_vocabulary: List[str] = []
     if cfg.output_format == "typst":

@@ -12,3 +12,6 @@ config.yaml
 
 # Per-URL failure ledger — local run state, not source
 failures.jsonl
+failures.jsonl.*
+failures.parked.jsonl
+junk_review.json

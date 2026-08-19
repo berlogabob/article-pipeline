@@ -139,15 +139,21 @@ def retry_failures(root, cfg, engine, *, force: bool = False) -> tuple[int, int]
     logger.info("Retrying %d failed URLs (%s)", len(retryable), summarize_failures(retryable))
     still_failing: List[FailureRecord] = []
     recovered = 0
-    for record in retryable:
+    for i, record in enumerate(retryable):
         url = record["url"]
         ok, err = process_article(url, record.get("title") or url, cfg, engine, force=force)
         if ok:
             recovered += 1
             logger.info("Recovered: %s", url[:70])
-            continue
-        still_failing.append({**record, "error": err.value, "retryable": is_retryable(err)})
-        logger.info("Still failing (%s): %s", err.value, url[:70])
+        else:
+            still_failing.append({**record, "error": err.value, "retryable": is_retryable(err)})
+            logger.info("Still failing (%s): %s", err.value, url[:70])
+        # A pass over thousands of URLs runs for hours; rewriting only at the
+        # end means a crash forgets everything and the next pass redoes the
+        # whole list (which is exactly what happened on 2026-08-19).
+        # ponytail: checkpoint every 20 — a crash loses at most 20 URLs of progress
+        if (i + 1) % 20 == 0:
+            rewrite_ledger(root, terminal + still_failing + retryable[i + 1 :])
 
     rewrite_ledger(root, terminal + still_failing)
     return recovered, len(terminal) + len(still_failing)
