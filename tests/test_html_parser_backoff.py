@@ -16,7 +16,9 @@ def _rate_limiter():
 def test_fetch_html_retries_429_with_exponential_backoff_then_succeeds():
     r1 = Mock(status_code=429)
     r2 = Mock(status_code=429)
-    r3 = Mock(status_code=200, text="ok")
+    r3 = Mock(status_code=200, encoding="utf-8")
+    r3.headers = {"content-type": "text/html"}
+    r3.iter_content.return_value = [b"ok"]
     r1.raise_for_status.side_effect = requests.HTTPError("429")
     r2.raise_for_status.side_effect = requests.HTTPError("429")
     r3.raise_for_status.return_value = None

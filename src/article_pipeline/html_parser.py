@@ -71,6 +71,17 @@ def validate_url(url: str) -> bool:
         return False
 
 
+# Model weights, archives, media: fetching one of these pulled a 7 GB
+# .safetensors into memory and charmap-decoded it, which froze the machine
+# (2026-08-19 reboot). Skip by extension before any download happens.
+_BINARY_EXTENSIONS = (
+    ".safetensors", ".ckpt", ".gguf", ".pt", ".pth", ".bin", ".onnx",
+    ".zip", ".tar", ".gz", ".tgz", ".7z", ".rar", ".iso", ".dmg",
+    ".apk", ".exe", ".msi", ".mp4", ".mov", ".mkv", ".avi", ".mp3",
+    ".wav", ".flac",
+)
+
+
 def fetch_html(
     url: str,
     timeout: int = 15,
@@ -81,6 +92,10 @@ def fetch_html(
     if not validate_url(url):
         logger.error("Invalid URL provided: %s", url[:100])
         return None
+    if urlparse(url).path.lower().endswith(_BINARY_EXTENSIONS):
+        raise FetchError(
+            ProcessingError.INVALID_URL, f"binary file URL skipped: {url[:80]}"
+        )
 
     limiter = rate_limiter if rate_limiter is not None else get_rate_limiter()
     limiter.wait(url)
@@ -100,7 +115,7 @@ def fetch_html(
         max_attempts = retry_count + 1
 
         for attempt in range(max_attempts):
-            response = _session.get(url, timeout=timeout)
+            response = _session.get(url, timeout=timeout, stream=True)
             if response.status_code == 429 and attempt < max_attempts - 1:
                 backoff = base_backoff * (2**attempt)
                 logger.warning(
@@ -129,10 +144,27 @@ def fetch_html(
                     f"HTTP {response.status_code} for {url[:80]}",
                 )
             response.raise_for_status()
-            content = response.text
-            if len(content) > MAX_CONTENT_SIZE:
-                logger.warning("Content truncated (%d bytes)", len(content))
-                content = content[:MAX_CONTENT_SIZE]
+            ctype = response.headers.get("content-type", "")
+            if ctype and not any(
+                t in ctype for t in ("text/", "html", "xml", "json")
+            ):
+                response.close()
+                raise FetchError(
+                    ProcessingError.INVALID_URL,
+                    f"non-text content-type {ctype[:40]} for {url[:80]}",
+                )
+            # Decode after capping, never before: response.text decodes the
+            # whole body first, which is what melted on a 7 GB blob.
+            data = b""
+            for chunk in response.iter_content(65536):
+                data += chunk
+                if len(data) > MAX_CONTENT_SIZE:
+                    logger.warning("Content truncated (%d bytes)", len(data))
+                    break
+            response.close()
+            content = data[:MAX_CONTENT_SIZE].decode(
+                response.encoding or "utf-8", errors="replace"
+            )
             logger.info("Fetched via requests: %s", url[:80])
             return content
     except requests.Timeout as e:
@@ -634,7 +666,11 @@ def _resolve_final_url(url: str, timeout: int = 15) -> str:
     get filed under the real source domain instead of the wrapper's.
     """
     try:
-        response = _session.get(url, timeout=timeout, allow_redirects=True)
+        # stream=True: only headers are needed for the final URL; without it
+        # this GET downloads the full body (once a 7 GB .safetensors).
+        response = _session.get(
+            url, timeout=timeout, allow_redirects=True, stream=True
+        )
         final = str(response.url)
         response.close()
         if validate_url(final):
@@ -648,6 +684,9 @@ def fetch_reader_article(url: str, timeout: int = 15) -> Optional[ExtractedArtic
     """Fetch through the r.jina.ai reader proxy, which renders JS and is not
     blocked where we are. Last-resort fallback: returns markdown or None."""
     url = _resolve_final_url(url, timeout=timeout)
+    if urlparse(url).path.lower().endswith(_BINARY_EXTENSIONS):
+        logger.debug("Reader fallback skipped, binary URL: %s", url[:80])
+        return None
     reader_url = f"https://r.jina.ai/http://{url}"
     try:
         response = _session.get(reader_url, timeout=max(timeout, 30))
