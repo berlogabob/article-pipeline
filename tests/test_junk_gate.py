@@ -100,3 +100,47 @@ def test_force_overrides_the_gate(tmp_path):
 
     assert summ.called, "with force=True the gate must not short-circuit the pipeline"
     assert err is ProcessingError.LLM_ERROR
+
+
+def test_lone_surrogates_do_not_crash_the_note_write(tmp_path):
+    """One unpaired \\ud835 in extracted text crashed a whole retry run."""
+    from unittest.mock import patch as _patch
+    from article_pipeline.metadata import ArticleMetadata
+
+    cfg = Config()
+    cfg.output_format = "typst"
+    cfg.typst.vault_dir = str(tmp_path / "vault")
+    articles = tmp_path / "vault" / cfg.typst.articles_subdir
+    articles.mkdir(parents=True)
+
+    metadata = ArticleMetadata(
+        summary_ru="х",
+        tags=["test"],
+        author=None,
+        verification_notes="средняя",
+        is_tutorial=False,
+        step_by_step_guidance=None,
+    )
+    with _patch(
+        "article_pipeline.processor.ingest_article",
+        return_value=(
+            {
+                "expanded_url": "https://example.com/math",
+                "normalized_url": "https://example.com/math",
+                "resolved_title": "Math note",
+                "extracted_text": "broken math \ud835 surrogate " * 10,
+                "image_urls": [],
+                "is_youtube": False,
+                "source": "example.com",
+                "canonical_url": "",
+                "metadata_only": False,
+            },
+            ProcessingError.UNKNOWN,
+        ),
+    ), _patch("article_pipeline.processor.summarize", return_value=metadata):
+        ok, err = process_article("https://example.com/math", "t", cfg, engine=None)
+
+    assert ok is True, f"expected a saved note, got {err}"
+    saved = list(articles.glob("*.typ"))
+    assert len(saved) == 1
+    assert "\ud835" not in saved[0].read_text(encoding="utf-8")

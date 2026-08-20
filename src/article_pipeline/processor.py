@@ -53,6 +53,15 @@ _SHELL_TITLES = {
 }
 
 
+def _utf8_safe(text: str) -> str:
+    """Replace lone UTF-16 surrogates that UTF-8 refuses to encode.
+
+    Extraction sometimes mangles mathematical alphanumerics into unpaired
+    surrogates; one such character crashed a whole retry run at write time.
+    """
+    return re.sub(r"[\ud800-\udfff]", "�", text)
+
+
 def junk_reason(title: str, url: str) -> Optional[str]:
     """Why this page should be a terminal failure instead of a note, or None.
 
@@ -239,7 +248,7 @@ def process_article(
         if _md_url_cache is not None:
             _md_url_cache.add(ingest["normalized_url"])
 
-    out_path.write_text(content, encoding="utf-8")
+    out_path.write_text(_utf8_safe(content), encoding="utf-8")
 
     if cfg.output_format == "typst":
         # A note the app cannot render is worse than a recorded failure —
@@ -400,7 +409,7 @@ def _save_playlist_video_notes(
             )
 
         out_dir.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(content, encoding="utf-8")
+        out_path.write_text(_utf8_safe(content), encoding="utf-8")
         if not is_typst and _md_url_cache is not None:
             _md_url_cache.add(normalize_url(video_url))
         saved += 1
