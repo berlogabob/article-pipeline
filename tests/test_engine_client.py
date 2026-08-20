@@ -88,7 +88,7 @@ def test_http_engine_chat_json_raises_on_persistent_error():
 def test_cli_engine_claude_command_assembled(monkeypatch):
     captured = {}
 
-    def fake_run(cmd, capture_output, text, timeout):
+    def fake_run(cmd, capture_output, text, timeout, stdin=None):
         captured["cmd"] = cmd
         captured["timeout"] = timeout
         return subprocess.CompletedProcess(cmd, 0, stdout='{"ok": true}', stderr="")
@@ -115,7 +115,7 @@ def test_cli_engine_claude_command_assembled(monkeypatch):
 def test_cli_engine_claude_omits_model_flag_when_empty(monkeypatch):
     captured = {}
 
-    def fake_run(cmd, capture_output, text, timeout):
+    def fake_run(cmd, capture_output, text, timeout, stdin=None):
         captured["cmd"] = cmd
         return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
 
@@ -132,7 +132,7 @@ def test_cli_engine_claude_omits_model_flag_when_empty(monkeypatch):
 def test_cli_engine_codex_command_assembled(monkeypatch, tmp_path):
     captured = {}
 
-    def fake_run(cmd, capture_output, text, timeout):
+    def fake_run(cmd, capture_output, text, timeout, stdin=None):
         captured["cmd"] = cmd
         # Simulate codex writing the last message to the --output-last-message file.
         out_path = cmd[cmd.index("--output-last-message") + 1]
@@ -155,7 +155,7 @@ def test_cli_engine_codex_command_assembled(monkeypatch, tmp_path):
 
 
 def test_cli_engine_timeout_raises(monkeypatch):
-    def fake_run(cmd, capture_output, text, timeout):
+    def fake_run(cmd, capture_output, text, timeout, stdin=None):
         raise subprocess.TimeoutExpired(cmd, timeout)
 
     monkeypatch.setattr(engine.subprocess, "run", fake_run)
@@ -166,7 +166,7 @@ def test_cli_engine_timeout_raises(monkeypatch):
 
 
 def test_cli_engine_nonzero_exit_raises_runtime_error(monkeypatch):
-    def fake_run(cmd, capture_output, text, timeout):
+    def fake_run(cmd, capture_output, text, timeout, stdin=None):
         return subprocess.CompletedProcess(cmd, 1, stdout="", stderr="boom went wrong")
 
     monkeypatch.setattr(engine.subprocess, "run", fake_run)

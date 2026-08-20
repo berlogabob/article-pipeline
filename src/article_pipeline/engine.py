@@ -136,6 +136,7 @@ class CliEngine:
                 capture_output=True,
                 text=True,
                 timeout=self.timeout_seconds,
+                stdin=subprocess.DEVNULL,
             )
         except subprocess.TimeoutExpired as exc:
             raise TimeoutError(
