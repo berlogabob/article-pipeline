@@ -53,6 +53,8 @@ def main() -> int:
     if args.retry_failed:
         recovered, remaining = retry_failures(root, cfg, engine, force=args.force)
         print(f"Retried: {recovered} recovered, {remaining} still failing")
+        if recovered:
+            _finalize_vault(cfg)
         return 0
 
     recover_stale(root, cfg)
@@ -63,6 +65,8 @@ def main() -> int:
 
     ok, failed = scan_inbox(root, cfg, engine, force=args.force)
     print(f"Done: {ok} ok, {failed} failed")
+    if ok:
+        _finalize_vault(cfg)
     outstanding = load_failures(root)
     if outstanding:
         # The file-level tally above hides per-URL failures inside files that
@@ -70,6 +74,20 @@ def main() -> int:
         print(f"{len(outstanding)} URLs in {LEDGER_NAME}: {summarize_failures(outstanding)}")
         print("  re-run the retryable ones with --retry-failed")
     return 1 if (failed and not ok) else 0
+
+
+def _finalize_vault(cfg) -> None:
+    """Reindex the vault so the phones inherit this machine's Typst work.
+
+    Only for Typst vaults, and only after a run that wrote something. Kept out
+    of the shell wrappers on purpose: the capture path (stage_notes.sh) chains
+    nothing, so a hook there would only cover the weekly retry job.
+    """
+    if cfg.output_format != "typst":
+        return
+    from .finalize import reindex_vault
+
+    reindex_vault(cfg.typst.vault_dir)
 
 
 if __name__ == "__main__":
