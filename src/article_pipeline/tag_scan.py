@@ -91,11 +91,21 @@ def vocabulary(vault_dir: Path, min_notes: int = 5, limit: int = 400) -> List[st
     notes = _index_notes(vault_dir)
     if not notes:
         return []
+    # TyLog aliases a note's `kind` into its tags so the app's tag filters can
+    # slice by kind (`#article`, `#person`, `#daily`). Those are structural, not
+    # topical: `article` sits on every article, so it outranks every real tag.
+    # Left in, it made the weekly digest file all 2,926 articles under one group
+    # and offered the LLM "article"/"daily" as established tags to apply.
+    # Derived from the index itself so it needs no upkeep as kinds change.
+    kind_tags = {
+        str(note.get("kind") or "").strip().lower()
+        for note in notes
+    } - {""}
     counts: Counter[str] = Counter()
     for note in notes:
         for tag in note.get("tags") or []:
             tag = str(tag).strip().lower()
-            if tag:
+            if tag and tag not in kind_tags:
                 counts[tag] += 1
     established = [t for t, n in counts.most_common() if n >= min_notes]
     return established[:limit]

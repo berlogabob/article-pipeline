@@ -27,6 +27,7 @@ from article_pipeline.stage3_render_typst import (  # noqa: E402
     _typst_string,
     escape_markup,
 )
+from article_pipeline.tag_scan import read_index_bytes  # noqa: E402
 
 OTHER = "Прочее / Other"
 
