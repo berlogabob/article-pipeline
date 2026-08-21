@@ -29,6 +29,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
+from article_pipeline.tag_scan import read_index_bytes
+
 MIN_NOTES = 5  # kConceptMapMinNotes in tylog_core/graph.dart
 
 _HEADER_TAGS = re.compile(r"^(\s*tags:\s*)\((.*?)\)(,?\s*)$", re.M)
@@ -41,7 +43,7 @@ def normalize(tag: str) -> str:
 
 
 def load_index(vault: Path) -> List[dict]:
-    return json.loads((vault / "_index" / "index.json").read_text(encoding="utf-8"))["notes"]
+    return json.loads(read_index_bytes(vault / "_index" / "index.json"))["notes"]
 
 
 def established(notes: List[dict], min_notes: int = MIN_NOTES) -> Set[str]:

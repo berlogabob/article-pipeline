@@ -4,6 +4,7 @@ Reads only the tylog.note.with(...) header of each .typ file via regex —
 mirrors TypstSeq's safe source parser, never depends on the app's _index/.
 """
 
+import gzip
 import json
 import logging
 import re
@@ -43,6 +44,16 @@ def parse_header(text: str) -> VaultNote | None:
     return VaultNote(_unescape(m_id.group(1)), _unescape(m_title.group(1)), tags)
 
 
+def read_index_bytes(path: Path) -> bytes:
+    """Index payload, gzipped or plain.
+
+    The app gzips `_index/index.json` (magic 1f 8b) while keeping the name;
+    older builds and donors write plain JSON. Both must read.
+    """
+    raw = path.read_bytes()
+    return gzip.decompress(raw) if raw[:2] == b"\x1f\x8b" else raw
+
+
 def _index_notes(vault_dir: Path) -> List[dict]:
     """Notes from the vault index, or from a donor when the index is absent.
 
@@ -53,7 +64,7 @@ def _index_notes(vault_dir: Path) -> List[dict]:
     """
     for candidate in [vault_dir / "_index" / "index.json", *sorted((vault_dir / "_system" / "index").glob("*.json"))]:
         try:
-            notes = json.loads(candidate.read_text(encoding="utf-8")).get("notes")
+            notes = json.loads(read_index_bytes(candidate)).get("notes")
         except (OSError, ValueError):
             continue
         if notes:

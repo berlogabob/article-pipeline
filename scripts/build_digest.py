@@ -105,7 +105,7 @@ def main() -> int:
     today = dt.date.today()
     week = args.week or f"{today.isocalendar()[0]}-W{today.isocalendar()[1]:02d}"
 
-    index = json.loads((args.vault / "_index" / "index.json").read_text("utf-8"))
+    index = json.loads(read_index_bytes(args.vault / "_index" / "index.json"))
     articles = articles_for_week(index, week)
     if not articles:
         print(f"no articles processed in {week}; nothing written")

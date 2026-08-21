@@ -39,6 +39,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
+from article_pipeline.tag_scan import read_index_bytes
+
 EMBED_MODEL = "bge-m3"
 OLLAMA = "http://127.0.0.1:11434"
 # Deliberately loose: this is the recall stage. Precision comes from the judge,
@@ -74,7 +76,7 @@ def _unit(vector: Sequence[float]) -> List[float]:
 
 
 def tag_counts(vault: Path, min_notes: int = MIN_NOTES) -> Counter:
-    notes = json.loads((vault / "_index" / "index.json").read_text(encoding="utf-8"))["notes"]
+    notes = json.loads(read_index_bytes(vault / "_index" / "index.json"))["notes"]
     counts: Counter[str] = Counter()
     for note in notes:
         for tag in note.get("tags") or []:
