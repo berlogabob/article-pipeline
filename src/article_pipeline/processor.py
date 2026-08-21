@@ -32,6 +32,10 @@ _JUNK_TITLE = re.compile(
     r"(?i)(?:^\s*(?:404|403|410)\b"
     r"|page not found|page doesn.t exist|url source|access denied"
     r"|just a moment|account suspended|attention required"
+    # A mkdocs/meta-refresh stub and a GitHub Pages 404 both return 200
+    # with real (tiny) text, so no status-code path ever fires on them.
+    # Four such notes reached the vault and became sync conflicts.
+    r"|redirecting|site not found"
     r"|страница не найдена|доступ (?:ограничен|запрещ))"
 )
 _ASSET_EXT = re.compile(

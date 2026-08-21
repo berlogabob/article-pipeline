@@ -14,6 +14,10 @@ from article_pipeline.net import normalize_url
 from article_pipeline.processor import process_article
 from article_pipeline.stage1_ingest import ingest_article
 
+# Ingest now rejects bodies under cfg.content.min_length (100) outright —
+# that floor is what stops redirect stubs and 404 shells becoming articles.
+_BODY_PAD = "These fixtures exercise title and URL resolution, so the body only has to clear the ingest length floor that junk stubs fail."
+
 
 def test_ingest_article_returns_resolved_html_title():
     with patch(
@@ -22,7 +26,7 @@ def test_ingest_article_returns_resolved_html_title():
         "article_pipeline.stage1_ingest.fetch_and_extract_article"
     ) as fetch_article:
         fetch_article.return_value = {
-            "text": "Extracted article body long enough",
+            "text": "Extracted article body long enough." + _BODY_PAD,
             "title": "Original Article Title",
             "canonical_url": None,
         }
@@ -41,7 +45,7 @@ def test_ingest_article_resolved_title_empty_when_extractor_has_no_title():
         "article_pipeline.stage1_ingest.fetch_and_extract_article"
     ) as fetch_article:
         fetch_article.return_value = {
-            "text": "Extracted article body long enough",
+            "text": "Extracted article body long enough." + _BODY_PAD,
             "title": None,
             "canonical_url": None,
         }
@@ -61,7 +65,7 @@ def test_ingest_article_uses_canonical_url_for_final_url_and_dedup():
         "article_pipeline.stage1_ingest.fetch_and_extract_article"
     ) as fetch_article:
         fetch_article.return_value = {
-            "text": "Extracted article body long enough",
+            "text": "Extracted article body long enough." + _BODY_PAD,
             "title": "Original Article Title",
             "canonical_url": "https://target.example/original-article",
         }
@@ -85,7 +89,7 @@ def test_ingest_article_canonical_url_empty_when_absent():
         "article_pipeline.stage1_ingest.fetch_and_extract_article"
     ) as fetch_article:
         fetch_article.return_value = {
-            "text": "Extracted article body long enough",
+            "text": "Extracted article body long enough." + _BODY_PAD,
             "title": "Original Article Title",
             "canonical_url": None,
         }
@@ -181,7 +185,7 @@ def test_ingest_article_uses_html_path_for_youtube_channel_urls():
         "article_pipeline.stage1_ingest.fetch_and_extract_article"
     ) as fetch_article:
         fetch_article.return_value = {
-            "text": "Channel page body long enough",
+            "text": "Channel page body long enough." + _BODY_PAD,
             "title": "pixaroma - YouTube",
             "canonical_url": None,
         }
@@ -217,7 +221,7 @@ def test_a_captionless_youtube_video_falls_back_to_oembed_metadata():
     ), patch(
         "article_pipeline.stage1_ingest.get_youtube_video_metadata",
         return_value={
-            "text": "Title: A Video\nURL: https://www.youtube.com/watch?v=gNZaDBeHgSk\nTranscript: not available",
+            "text": "Title: A Video\nURL: https://www.youtube.com/watch?v=gNZaDBeHgSk\nTranscript: not available" + _BODY_PAD,
             "title": "A Video",
             "canonical_url": "https://www.youtube.com/watch?v=gNZaDBeHgSk",
         },
@@ -253,7 +257,7 @@ def test_ingest_article_passes_force_youtube_asr_to_transcript_fetcher():
         "article_pipeline.stage1_ingest.expand_url", side_effect=lambda url: url
     ), patch(
         "article_pipeline.stage1_ingest.get_youtube_transcript",
-        return_value="forced transcript text",
+        return_value="forced transcript text." + _BODY_PAD,
     ) as transcript:
         ingest, err = ingest_article(
             "https://www.youtube.com/watch?v=gNZaDBeHgSk",
@@ -267,7 +271,7 @@ def test_ingest_article_passes_force_youtube_asr_to_transcript_fetcher():
         "https://www.youtube.com/watch?v=gNZaDBeHgSk",
         force_asr=True,
     )
-    assert ingest["extracted_text"] == "forced transcript text"
+    assert ingest["extracted_text"].startswith("forced transcript text")
 
 
 def test_ingest_article_uses_youtube_playlist_metadata():
@@ -281,7 +285,7 @@ def test_ingest_article_uses_youtube_playlist_metadata():
         "article_pipeline.stage1_ingest.fetch_and_extract_article"
     ) as fetch_article:
         playlist_metadata.return_value = {
-            "text": "playlist text",
+            "text": "playlist text." + _BODY_PAD,
             "title": "Курс по Obsidian (9 видео)",
             "canonical_url": "https://www.youtube.com/playlist?list=PLeDR6",
             "videos": [
@@ -306,7 +310,7 @@ def test_ingest_article_uses_youtube_playlist_metadata():
     assert ingest["is_youtube"]
     assert ingest["expanded_url"] == "https://www.youtube.com/playlist?list=PLeDR6"
     assert ingest["resolved_title"] == "Курс по Obsidian (9 видео)"
-    assert ingest["extracted_text"] == "playlist text"
+    assert ingest["extracted_text"].startswith("playlist text")
     assert len(ingest["playlist_videos"]) == 1
     transcript.assert_not_called()
     fetch_article.assert_not_called()

@@ -141,7 +141,13 @@ def ingest_article(
         logger.error("Content empty or too short: %s", final_url[:80])
         return None, ProcessingError.EMPTY_CONTENT
     if len(extracted) < min_length:
-        logger.warning("Content short (%d chars): %s", len(extracted), final_url[:80])
+        # Terminal, not a warning. junk_reason's docstring already promised this
+        # ("ingest already enforces cfg.content.min_length and records it as
+        # retryable EMPTY_CONTENT") while the code merely logged and carried on,
+        # so ~60-character redirect stubs were summarised by the LLM, tagged and
+        # written into the vault.
+        logger.error("Content short (%d chars): %s", len(extracted), final_url[:80])
+        return None, ProcessingError.EMPTY_CONTENT
 
     result: IngestResult = {
         "expanded_url": final_url,

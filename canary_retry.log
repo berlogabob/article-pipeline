@@ -1,0 +1,415 @@
+[23:34:26] Retrying 100 failed URLs (90 llm_error, 8 blocked, 2 parse_error)
+[23:34:27] Trafilatura empty: https://www.google.com/share.google?q=r55bVPVlpPPcQj6xp
+[23:34:28] Fetch refused for https://www.google.com/share.google?q=r55bVPVlpPPcQj6xp: HTTP 404 for https://www.google.com/share.google?q=r55bVPVlpPPcQj6xp
+[23:34:28] Still failing (not_found): https://share.google/r55bVPVlpPPcQj6xp
+[23:34:29] Trafilatura empty: https://www.google.com/share.google?q=iOv1Ai22SRI7MX1Ie
+[23:34:32] Fetch refused for https://www.google.com/share.google?q=iOv1Ai22SRI7MX1Ie: HTTP 403 for https://www.google.com/share.google?q=iOv1Ai22SRI7MX1Ie
+[23:34:32] Still failing (blocked): https://share.google/iOv1Ai22SRI7MX1Ie
+[23:34:33] Fetched via trafilatura: https://www.google.com/share.google?q=DpUrNomLTEmix0LaX
+[23:34:33] Extracted 30608 chars from HTML
+[23:34:33] Already in vault (id md-114167de2a092362): https://nymag.com/strategist/article/best-3d-printers.html
+[23:34:33] Recovered: https://share.google/DpUrNomLTEmix0LaX
+[23:34:35] Fetched via trafilatura: https://www.google.com/share.google?q=0YcXg0yPw2Y8buQdO
+[23:34:35] Extracted 18648 chars from HTML
+[23:34:35] Already in vault (id md-37954ef767a79a03): https://www.xda-developers.com/reterminal-sticky-fridge-magnet-voice-notes-best-
+[23:34:35] Recovered: https://share.google/0YcXg0yPw2Y8buQdO
+[23:34:37] Fetched via trafilatura: https://www.google.com/share.google?q=ovI9kpFDB9gTeYeby
+[23:34:37] Extracted 15575 chars from HTML
+[23:34:37] Already in vault (id md-7d015c42c4a87f77): https://habr.com/ru/companies/otus/articles/1064244/
+[23:34:37] Recovered: https://share.google/ovI9kpFDB9gTeYeby
+[23:34:40] Fetched via trafilatura: https://www.google.com/share.google?q=Y3CkxQV0NEalpqpVC
+[23:34:40] Extracted 1260 chars from HTML
+[23:34:40] Already in vault (id md-98446b873d06cb79): https://www.ixbt.com/news/2026/04/18/grok-4-3-pdf.html
+[23:34:40] Recovered: https://share.google/Y3CkxQV0NEalpqpVC
+[23:34:43] Fetched via trafilatura: https://www.google.com/share.google?q=WD8sixX0sKi2wQ7hc
+[23:34:43] Extracted 2281 chars from HTML
+[23:34:43] Already in vault (id md-1eacc82a0d0ca29c): https://www.ixbt.com/news/2026/04/19/roboty-nachali-obobshat-robot-ot-physical-i
+[23:34:43] Recovered: https://share.google/WD8sixX0sKi2wQ7hc
+[23:34:45] Fetched via trafilatura: https://www.google.com/share.google?q=2DTfBlBfugpcWvCm1
+[23:34:45] Extracted 1217 chars from HTML
+[23:34:45] Already in vault (id md-ad9736ea279ae4e8): https://www.ixbt.com/news/2026/03/24/26-250-300-160-anker-huawei-xiaomi.html
+[23:34:45] Recovered: https://share.google/2DTfBlBfugpcWvCm1
+[23:34:45] Fetched via trafilatura: https://ko-fi.com/blog/editor
+[23:34:45] No content extracted from HTML
+[23:34:45] Using metadata fallback for Ko-fi: https://ko-fi.com/blog/editor
+[23:34:45] Junk page (site shell page: 'Log in'), recorded as not_found: https://ko-fi.com/account/login?ReturnUrl=%2Fblog%2Feditor
+[23:34:45] Still failing (not_found): https://ko-fi.com/blog/editor
+[23:34:46] Trafilatura empty: http://127.0.0.1:8787
+[23:34:46] Requests failed: HTTPConnectionPool(host='127.0.0.1', port=8787): Max retries exceeded with url: / (Caused by NewConnectionError("HTTPConnection(host='127.0.0.1', port=8787): Failed to establish a new connection: [Errno 61] Connection refused"))
+[23:34:46] Extraction failed: http://127.0.0.1:8787
+[23:34:46] Still failing (parse_error): http://127.0.0.1:8787
+[23:34:51] Fetched via trafilatura: https://www.google.com/share.google?q=6kHvup1QOAcMSicxo
+[23:34:51] Extracted 5917 chars from HTML
+[23:34:51] Already in vault (id md-9eed0ca38b2fe163): https://it3d.com/en/3d-printers/pellet-filament/
+[23:34:51] Recovered: https://share.google/6kHvup1QOAcMSicxo
+[23:34:52] Fetched via trafilatura: https://www.google.com/share.google?q=kAUXGejXpnjGl20a4
+[23:34:52] No content extracted from HTML
+[23:34:52] Using metadata fallback for YouTube: https://www.google.com/share.google?q=kAUXGejXpnjGl20a4
+[23:34:53] Already in vault (id md-ffe5d8d2e75f1cf8): https://www.youtube.com/watch?v=OBJjVG-CGNs
+[23:34:53] Recovered: https://share.google/kAUXGejXpnjGl20a4
+[23:34:54] Trafilatura empty: https://www.google.com/share.google?q=y92qjSrnsr6AiZ2hx
+[23:34:57] Fetch refused for https://www.google.com/share.google?q=y92qjSrnsr6AiZ2hx: HTTP 403 for https://www.google.com/share.google?q=y92qjSrnsr6AiZ2hx
+[23:34:57] Still failing (blocked): https://share.google/y92qjSrnsr6AiZ2hx
+[23:34:58] Fetched via trafilatura: https://www.google.com/share.google?q=7Jpvrelsev8luClsk
+[23:34:58] No content extracted from HTML
+[23:35:04] Using reader fallback: https://acestudio.ai/?shem=dsdf,sharefoc,agadiscoversdl,,sh/x/discover/m1/4
+[23:35:04] Already in vault (id md-5164ca9da747a09c): https://acestudio.ai/?shem=dsdf,sharefoc,agadiscoversdl,,sh/x/discover/m1/4
+[23:35:04] Recovered: https://share.google/7Jpvrelsev8luClsk
+[23:35:05] Fetched via trafilatura: https://www.docupipe.ai/
+[23:35:05] Extracted 6981 chars from HTML
+[23:35:06] Already in vault (id md-d2c2205096c06b7a): https://www.docupipe.ai/landing-alternate
+[23:35:06] Recovered: https://search.app/sx4RA
+[23:35:07] Fetched via trafilatura: https://www.google.com/share.google?q=XBiuY1JR3nkLXYhqf
+[23:35:07] Extracted 10880 chars from HTML
+[23:35:07] Already in vault (id md-c597a74695aceb7a): https://store.axelera.ai/
+[23:35:07] Recovered: https://share.google/XBiuY1JR3nkLXYhqf
+[23:35:08] Fetched via trafilatura: https://www.google.com/share.google?q=cHbB35EW7qlkOtTp2
+[23:35:09] Extracted 2340 chars from HTML
+[23:35:09] Already in vault (id md-1a2d18075e7db4f8): https://play.google.com/store/apps/details?id=com.games.foundation&hl=en_US
+[23:35:09] Recovered: https://share.google/cHbB35EW7qlkOtTp2
+[23:35:10] Fetching transcript for YouTube video: p2GKhlPMVO0
+[23:35:10] No auto-generated transcript available for p2GKhlPMVO0: 
+Could not retrieve a transcript for the video https://www.youtube.com/watch?v=p2GKhlPMVO0! This is most likely caused by:
+
+No transcripts were found for any of the requested language codes: ['ru', 'en']
+
+For this video (p2GKhlPMVO0) transcripts are available in the following languages:
+
+(MANUALLY CREATED)
+None
+
+(GENERATED)
+ - hi ("Hindi (auto-generated)")
+
+(TRANSLATION LANGUAGES)
+None
+
+If you are sure that the described cause is not responsible for this error and that a transcript should be retrievable, please create an issue at https://github.com/jdepoix/youtube-transcript-api/issues. Please add which version of youtube_transcript_api you are using and provide the information needed to replicate the error. Also make sure that there are no open issues which already describe your problem!
+[23:35:10] Fetching YouTube subtitles via yt-dlp: p2GKhlPMVO0 (ru)
+[23:35:14] Fetched YouTube subtitles via yt-dlp for p2GKhlPMVO0: 574 chars
+[23:35:14] Already in vault (id md-1b419e4fc39c6d0f): https://www.youtube.com/watch?v=p2GKhlPMVO0
+[23:35:14] Recovered: https://search.app/tkmqq
+[23:35:15] Fetched via trafilatura: https://www.google.com/share.google?q=gq5mF6flmw867hj0H
+[23:35:15] Extracted 1805 chars from HTML
+[23:35:15] Already in vault (id md-cc377bec8232c31e): https://chromatron.art
+[23:35:15] Recovered: https://share.google/gq5mF6flmw867hj0H
+[23:35:17] Fetched via trafilatura: https://www.google.com/share.google?q=S99vvg40UYIgd0nzj
+[23:35:17] Extracted 3016 chars from HTML
+[23:35:18] Already in vault (id md-4e5bbeb4d40d12e4): https://eu.makera.com/
+[23:35:18] Recovered: https://share.google/S99vvg40UYIgd0nzj
+[23:35:19] Fetched via trafilatura: https://www.google.com/share.google?q=eAGPN8p7PgLSHway3
+[23:35:19] Extracted 368 chars from HTML
+[23:35:19] Already in vault (id md-a82dfceaf3ae7b68): https://x.com/arduino/status/2051357354172506157
+[23:35:19] Recovered: https://share.google/eAGPN8p7PgLSHway3
+[23:35:21] Fetched via trafilatura: https://www.google.com/share.google?q=ArqOLeL4y18W9ITzp
+[23:35:21] Extracted 6713 chars from HTML
+[23:35:21] Already in vault (id md-8e801208259f84eb): https://play.google.com/store/apps/details?id=cz.seznam.mapy&hl=en_US
+[23:35:21] Recovered: https://share.google/ArqOLeL4y18W9ITzp
+[23:35:23] Fetched via trafilatura: https://www.google.com/share.google?q=647vK5KKt1ngAeNtX
+[23:35:23] Extracted 429 chars from HTML
+[23:35:23] Already in vault (id md-eaa260175df04451): https://x.com/freeCodeCamp/status/2038708184496447772
+[23:35:23] Recovered: https://share.google/647vK5KKt1ngAeNtX
+[23:35:25] Fetched via trafilatura: https://www.google.com/share.google?q=mXWcOjT74aJU04mNx
+[23:35:25] Extracted 709 chars from HTML
+[23:35:25] Already in vault (id md-37a34f4aeb09c721): https://x.com/freeCodeCamp/status/2038466506556624920
+[23:35:25] Recovered: https://share.google/mXWcOjT74aJU04mNx
+[23:35:27] Fetched via trafilatura: https://www.google.com/share.google?q=N1IN2rRJXOYYxAi28
+[23:35:27] Extracted 404 chars from HTML
+[23:35:28] Already in vault (id md-b6ed6bd0318d3f9d): https://x.com/freeCodeCamp/status/2043419147023876288
+[23:35:28] Recovered: https://share.google/N1IN2rRJXOYYxAi28
+[23:35:29] Fetched via trafilatura: https://www.google.com/share.google?q=uayzAzWm46kKiMDZC
+[23:35:29] Extracted 1481 chars from HTML
+[23:35:29] Already in vault (id md-62b18a4fe4a04079): https://x.com/omarsar0/status/2053978221193130434
+[23:35:29] Recovered: https://share.google/uayzAzWm46kKiMDZC
+[23:35:31] Fetched via trafilatura: https://www.google.com/share.google?q=PZXC1Yek4hDtIboDV
+[23:35:31] Extracted 1481 chars from HTML
+[23:35:31] Already in vault (id md-62b18a4fe4a04079): https://x.com/omarsar0/status/2053978221193130434
+[23:35:31] Recovered: https://share.google/PZXC1Yek4hDtIboDV
+[23:35:34] Fetched via trafilatura: https://www.google.com/share.google?q=zsySgrOVGWCGORg53
+[23:35:34] No content extracted from HTML
+[23:35:34] Using metadata fallback for Humble Bundle: https://www.google.com/share.google?q=zsySgrOVGWCGORg53
+[23:35:34] Already in vault (id md-5f80bd012ebacaef): https://www.humblebundle.com/software/learn-to-make-games-in-godot-gamedevtv-sof
+[23:35:34] Recovered: https://share.google/zsySgrOVGWCGORg53
+[23:35:35] Fetched via trafilatura: https://www.google.com/share.google?q=q53KLAF1zzfUKkxaJ
+[23:35:35] Extracted 62888 chars from HTML
+[23:35:35] Already in vault (id md-988d17b2383b4d46): https://www.google.com/share.google?q=q53KLAF1zzfUKkxaJ
+[23:35:35] Recovered: https://share.google/q53KLAF1zzfUKkxaJ
+[23:35:38] Fetched via trafilatura: https://www.google.com/share.google?q=GlXN9nlUW7h4h3dEP
+[23:35:38] Extracted 962 chars from HTML
+[23:35:38] Already in vault (id md-eebf90759e42138b): https://x.com/omarsar0/status/2037617918645809394
+[23:35:38] Recovered: https://share.google/GlXN9nlUW7h4h3dEP
+[23:35:39] Fetched via trafilatura: https://www.google.com/share.google?q=CEEfXaERKhEqOZ9pE
+[23:35:39] Extracted 769 chars from HTML
+[23:35:40] Already in vault (id md-3179617794fdfb0c): https://x.com/cb_doge/status/2055375506477125880
+[23:35:40] Recovered: https://share.google/CEEfXaERKhEqOZ9pE
+[23:35:41] Fetching transcript for YouTube video: KmtqNaGPiiQ
+[23:35:42] Found en transcript for KmtqNaGPiiQ: 61871 chars
+[23:35:42] Already in vault (id md-b10b7b6cc23662a1): https://www.youtube.com/watch?v=KmtqNaGPiiQ&feature=youtu.be
+[23:35:42] Recovered: https://youtu.be/KmtqNaGPiiQ
+[23:35:43] Fetched via trafilatura: https://klausai.com/
+[23:35:43] Extracted 12833 chars from HTML
+[23:35:43] Already in vault (id md-383475726b147c91): https://klausai.com/
+[23:35:43] Recovered: https://search.app/2Xn5o
+[23:35:44] Fetched via trafilatura: https://www.google.com/share.google?q=bPSAHrlvEyR1s6FDU
+[23:35:44] Extracted 12326 chars from HTML
+[23:35:44] Already in vault (id md-44c5a52b7b2f6dae): https://www.google.com/share.google?q=bPSAHrlvEyR1s6FDU
+[23:35:44] Recovered: https://share.google/bPSAHrlvEyR1s6FDU
+[23:35:44] Still failing (parse_error): https://alunos.uminho.pt/EN/students/Format/1_Despacho_RT-38_2026.pdf
+[23:36:15] Trafilatura empty: https://venturebeat.com/data/scale-ai-launches-voice-showdown-the-first-real-wor
+[23:36:17] Using reader fallback: https://venturebeat.com/data/scale-ai-launches-voice-showdown-the-first-real-wor
+[23:36:17] Already in vault (id md-5d8c4d3560082748): https://venturebeat.com/data/scale-ai-launches-voice-showdown-the-first-real-wor
+[23:36:17] Recovered: https://search.app/RhT2i
+[23:36:18] Fetched via trafilatura: https://www.google.com/share.google?q=RRBFfeRS29AsvxXqC
+[23:36:18] Extracted 12253 chars from HTML
+[23:36:18] Already in vault (id md-114c6bc0735675bf): https://www.google.com/share.google?q=RRBFfeRS29AsvxXqC
+[23:36:18] Recovered: https://share.google/RRBFfeRS29AsvxXqC
+[23:36:20] Fetched via trafilatura: https://www.google.com/share.google?q=Y2TvsxuGH0uIHy5fr
+[23:36:20] Extracted 6138 chars from HTML
+[23:36:20] Already in vault (id md-4d46b63685634b3d): https://3dprintingindustry.com/news/new-zealand-companies-launch-wool-based-colo
+[23:36:20] Recovered: https://share.google/Y2TvsxuGH0uIHy5fr
+[23:36:22] Fetched via trafilatura: https://www.google.com/share.google?q=9q46tmPtgv0vpGFEu
+[23:36:22] Extracted 4728 chars from HTML
+[23:36:22] Already in vault (id md-82c8b3d1e1c388b1): https://3dnews.ru/1142218/day-emu-zavershit-rabotu-anthropic-ubedila-razrabotchi
+[23:36:22] Recovered: https://share.google/9q46tmPtgv0vpGFEu
+[23:36:24] Fetched via trafilatura: https://www.google.com/share.google?q=PTeaPXBe80WukDPhh
+[23:36:24] Extracted 3954 chars from HTML
+[23:36:24] Already in vault (id md-3a23de57404c29b3): https://3dnews.ru/1140883/bambu-lab-prigrozila-sudom-razrabotchiku-kotoryy-vernu
+[23:36:24] Recovered: https://share.google/PTeaPXBe80WukDPhh
+[23:36:25] Fetched via trafilatura: https://www.google.com/share.google?q=AyxQUoN7PGicq6mO0
+[23:36:25] Extracted 2241 chars from HTML
+[23:36:26] Already in vault (id md-de5ccc2328b3e9b6): https://3dnews.ru/1142228/sozdan-material-dlya-neischerpaemoy-flyagi-on-sam-dobi
+[23:36:26] Recovered: https://share.google/AyxQUoN7PGicq6mO0
+[23:36:29] Fetched via trafilatura: https://www.google.com/share.google?q=bjuVkb6vundHKSo92
+[23:36:29] Extracted 8573 chars from HTML
+[23:36:29] Already in vault (id md-857b955c5f85e1ca): https://3dtoday.ru/blogs/news3dtoday/kompaniya-creality-vypustila-byudzetnyi-3d-
+[23:36:29] Recovered: https://share.google/bjuVkb6vundHKSo92
+[23:36:29] Fetched via trafilatura: https://www.google.com/share.google?q=ZxrhdSzsP86eVORxy
+[23:36:29] Extracted 32839 chars from HTML
+[23:36:30] Already in vault (id md-c7485a1becf82488): https://4pda.to/2026/04/05/454651/uchyonye_dostigli_130_effektivnosti_preobrazov
+[23:36:30] Recovered: https://share.google/ZxrhdSzsP86eVORxy
+[23:36:31] Fetched via trafilatura: https://www.google.com/share.google?q=2EtqnkijCku0KbQWp
+[23:36:31] Extracted 17901 chars from HTML
+[23:36:31] Already in vault (id md-82934ad2d53a5739): https://4pda.to/2026/04/25/455549/velomobil_manta_rabotaet_ot_solntsa_i_prevrasc
+[23:36:31] Recovered: https://share.google/2EtqnkijCku0KbQWp
+[23:36:33] Fetched via trafilatura: https://www.google.com/share.google?q=SF81McjzSI2QM6jwd
+[23:36:33] Extracted 17202 chars from HTML
+[23:36:34] Already in vault (id md-dfa4c54da6e64bc3): https://4pda.to/2026/04/26/455542/pochvennye_mikroorganizmy_mogut_vyrabatyvat_en
+[23:36:34] Recovered: https://share.google/SF81McjzSI2QM6jwd
+[23:36:34] Fetched via trafilatura: https://4pda.to/2026/03/23/454320/google_perevodchik_nachnyot_uchit_polzovatelej
+[23:36:34] Extracted 18967 chars from HTML
+[23:36:34] Already in vault (id md-43761f4ccf31dfce): https://4pda.to/2026/03/23/454320/google_perevodchik_nachnyot_uchit_polzovatelej
+[23:36:34] Recovered: https://search.app/myDas
+[23:36:36] Fetched via trafilatura: https://4pda.to/2026/03/23/454331/vidabay_predstavila_bezlimitnyj_magnit_na_khol
+[23:36:36] Extracted 17344 chars from HTML
+[23:36:36] Already in vault (id md-fd68ce250a8ea0e3): https://4pda.to/2026/03/23/454331/vidabay_predstavila_bezlimitnyj_magnit_na_khol
+[23:36:36] Recovered: https://search.app/v84KG
+[23:36:38] Fetched via trafilatura: https://www.google.com/share.google?q=gNttdHTvSed9ikeuK
+[23:36:38] Extracted 17323 chars from HTML
+[23:36:38] Already in vault (id md-5a0821dcd2b43047): https://4pda.to/2026/05/02/455837/s_pomoschyu_3d_pechati_sdelali_mikrorobotov_dl
+[23:36:38] Recovered: https://share.google/gNttdHTvSed9ikeuK
+[23:36:40] Fetched via trafilatura: https://www.google.com/share.google?q=lGwOeiY3WCYLlJbre
+[23:36:40] Extracted 7371 chars from HTML
+[23:36:40] Already in vault (id md-40899c9ab2f92076): https://80.lv/articles/creating-animated-tokyo-diorama-in-3d-with-2d-elements-us
+[23:36:40] Recovered: https://share.google/lGwOeiY3WCYLlJbre
+[23:36:41] Fetched via trafilatura: https://www.google.com/share.google?q=eC02b4XQamn3zaRAj
+[23:36:42] Extracted 739 chars from HTML
+[23:36:42] Already in vault (id md-e5610361f9e7a317): https://80.lv/articles/solo-dev-shows-cool-stylized-paper-unfolding-animation-ma
+[23:36:42] Recovered: https://share.google/eC02b4XQamn3zaRAj
+[23:36:44] Fetched via trafilatura: https://www.google.com/share.google?q=Z4xtTLHRstX5MinfJ
+[23:36:44] Extracted 1948 chars from HTML
+[23:36:44] Already in vault (id md-c2906ca55f0961a2): https://80.lv/articles/artist-shows-a-blender-setup-that-looks-like-a-photo?shem
+[23:36:44] Recovered: https://share.google/Z4xtTLHRstX5MinfJ
+[23:36:46] Fetched via trafilatura: https://www.google.com/share.google?q=ZsJPUO7JqzVg5Obas
+[23:36:46] Extracted 6100 chars from HTML
+[23:36:46] Already in vault (id md-dc90460479c93a4c): https://80.lv/articles/elevating-gradient-texturing-to-a-standard-workflow-in-bl
+[23:36:46] Recovered: https://share.google/ZsJPUO7JqzVg5Obas
+[23:36:48] Fetched via trafilatura: https://www.google.com/share.google?q=Zhc7qs3M6G0bQeJ7a
+[23:36:48] Extracted 2632 chars from HTML
+[23:36:48] Already in vault (id md-5166319c1b27ccdc): https://80.lv/articles/stylized-blender-shader-that-looks-like-book-illustration
+[23:36:48] Recovered: https://share.google/Zhc7qs3M6G0bQeJ7a
+[23:36:50] Fetched via trafilatura: https://www.google.com/share.google?q=TLuaTQi47fng79Koi
+[23:36:50] Extracted 2632 chars from HTML
+[23:36:50] Already in vault (id md-4165389cc503dbb8): https://80.lv/articles/create-two-light-anime-style-3d-scenes-in-blender-with-th
+[23:36:50] Recovered: https://share.google/TLuaTQi47fng79Koi
+[23:36:52] Fetched via trafilatura: https://www.google.com/share.google?q=HGSNrGJUAZLYxpi8N
+[23:36:52] Extracted 7700 chars from HTML
+[23:36:52] Already in vault (id md-91ad8091b81cf646): https://9to5google.com/2026/05/12/the-android-show-2026/
+[23:36:52] Recovered: https://share.google/HGSNrGJUAZLYxpi8N
+[23:36:53] Trafilatura empty: https://www.google.com/share.google?q=rT9JSJScTDpsABJc3
+[23:36:55] Fetched via requests: https://www.google.com/share.google?q=rT9JSJScTDpsABJc3
+[23:36:55] Extracted 2065 chars from HTML
+[23:36:55] Already in vault (id md-d988ef7d8723c3b3): https://9to5linux.com/mixxx-2-5-6-open-source-dj-app-improves-controller-mapping
+[23:36:55] Recovered: https://share.google/rT9JSJScTDpsABJc3
+[23:36:55] Trafilatura empty: https://www.google.com/share.google?q=evYHcslu0IKEOZBaW
+[23:36:58] Fetch refused for https://www.google.com/share.google?q=evYHcslu0IKEOZBaW: HTTP 403 for https://www.google.com/share.google?q=evYHcslu0IKEOZBaW
+[23:36:58] Still failing (blocked): https://share.google/evYHcslu0IKEOZBaW
+[23:36:59] Trafilatura empty: https://www.google.com/share.google?q=yv9GmW5VJYwGEes5a
+[23:37:02] Fetch refused for https://www.google.com/share.google?q=yv9GmW5VJYwGEes5a: HTTP 403 for https://www.google.com/share.google?q=yv9GmW5VJYwGEes5a
+[23:37:02] Still failing (blocked): https://share.google/yv9GmW5VJYwGEes5a
+[23:37:02] Trafilatura empty: https://www.google.com/share.google?q=fiTKIpk4AD2KLJml3
+[23:37:05] Fetch refused for https://www.google.com/share.google?q=fiTKIpk4AD2KLJml3: HTTP 403 for https://www.google.com/share.google?q=fiTKIpk4AD2KLJml3
+[23:37:05] Still failing (blocked): https://share.google/fiTKIpk4AD2KLJml3
+[23:37:05] Trafilatura empty: https://www.google.com/share.google?q=sTEyqiT0PwOtaYVDr
+[23:37:08] Fetch refused for https://www.google.com/share.google?q=sTEyqiT0PwOtaYVDr: HTTP 403 for https://www.google.com/share.google?q=sTEyqiT0PwOtaYVDr
+[23:37:08] Still failing (blocked): https://share.google/sTEyqiT0PwOtaYVDr
+[23:37:08] Trafilatura empty: https://www.google.com/share.google?q=NBxa9SthZVpsYS797
+[23:37:12] Fetch refused for https://www.google.com/share.google?q=NBxa9SthZVpsYS797: HTTP 403 for https://www.google.com/share.google?q=NBxa9SthZVpsYS797
+[23:37:12] Still failing (blocked): https://share.google/NBxa9SthZVpsYS797
+[23:37:12] Fetched via trafilatura: https://www.google.com/share.google?q=1fXybtYUw3bUDs0yb
+[23:37:12] Extracted 8444 chars from HTML
+[23:37:12] Already in vault (id md-e4057d4eeb64c4b6): https://aws.amazon.com/blogs/aws/amazon-bedrock-introduces-new-advanced-prompt-o
+[23:37:12] Recovered: https://share.google/1fXybtYUw3bUDs0yb
+[23:37:15] Fetched via trafilatura: https://www.google.com/share.google?q=M06T074sE1p6cMTyv
+[23:37:15] No content extracted from HTML
+[23:37:15] Using metadata fallback for google.com: https://www.google.com/share.google?q=M06T074sE1p6cMTyv
+[23:37:15] LLM call: model=(default) temp=0.05
+[23:37:24] Saved: google.com - AIM Indias Leading AI Data Science Media.typ
+[23:37:24] Recovered: https://share.google/M06T074sE1p6cMTyv
+[23:37:25] Fetched via trafilatura: https://www.androidauthority.com/android-sideloading-poll-results-3650979/
+[23:37:25] Extracted 5756 chars from HTML
+[23:37:25] Already in vault (id md-8df474a5e34a2dae): https://www.androidauthority.com/android-sideloading-poll-results-3650979/
+[23:37:25] Recovered: https://search.app/2HY2S
+[23:37:26] Fetched via trafilatura: https://www.google.com/share.google?q=hEVaYOOCq3Ai5eJrv
+[23:37:26] Extracted 2998 chars from HTML
+[23:37:26] Already in vault (id md-a4136009cc69c513): https://www.androidauthority.com/grapheneos-google-apple-approved-devices-web-wa
+[23:37:26] Recovered: https://share.google/hEVaYOOCq3Ai5eJrv
+[23:37:28] Fetched via trafilatura: https://www.google.com/share.google?q=nGTwmJvwsLugvVYgj
+[23:37:28] Extracted 4814 chars from HTML
+[23:37:28] Already in vault (id md-5cd555c096c169c6): https://www.androidpolice.com/i-thought-notebooklm-was-good-until-i-found-its-co
+[23:37:28] Recovered: https://share.google/nGTwmJvwsLugvVYgj
+[23:37:30] Fetched via trafilatura: https://www.google.com/share.google?q=R94uHwborPqBmu5tS
+[23:37:30] Extracted 6060 chars from HTML
+[23:37:30] Already in vault (id md-efd1c52de8e659a8): https://www.androidpolice.com/gemini-scheduled-actions-is-best-automation-tool-o
+[23:37:30] Recovered: https://share.google/R94uHwborPqBmu5tS
+[23:37:32] Fetched via trafilatura: https://www.google.com/share.google?q=QSCrFj6yVSfeorkzx
+[23:37:32] Extracted 5603 chars from HTML
+[23:37:32] Already in vault (id md-734ec827ac0f4ae9): https://www.androidpolice.com/people-who-made-notebooklm-dropped-new-app-and-im-
+[23:37:32] Recovered: https://share.google/QSCrFj6yVSfeorkzx
+[23:37:34] Fetched via trafilatura: https://www.google.com/share.google?q=bHNnlKwNyjyPQAXZt
+[23:37:34] Extracted 6397 chars from HTML
+[23:37:34] Already in vault (id md-a9825d26a873172e): https://www.androidpolice.com/the-private-notebooklm-alternative-im-moving-all-m
+[23:37:34] Recovered: https://share.google/bHNnlKwNyjyPQAXZt
+[23:37:36] Fetched via trafilatura: https://www.google.com/share.google?q=I39AIcZdZO0Hapql8
+[23:37:36] Extracted 5597 chars from HTML
+[23:37:36] Already in vault (id md-2b8bcb12573ad12f): https://www.androidpolice.com/gemini-rewrote-my-resume-look-like-a-professional-
+[23:37:36] Recovered: https://share.google/I39AIcZdZO0Hapql8
+[23:37:38] Fetched via trafilatura: https://www.google.com/share.google?q=MibcnZOATAlPFrBVr
+[23:37:38] Extracted 14796 chars from HTML
+[23:37:38] Already in vault (id md-98ad0ce59b116815): https://www.anthropic.com/research/automated-alignment-researchers
+[23:37:38] Recovered: https://share.google/MibcnZOATAlPFrBVr
+[23:37:40] Fetched via trafilatura: https://www.google.com/share.google?q=BHl1SImvG4SEyXi6U
+[23:37:40] Extracted 2019 chars from HTML
+[23:37:40] Already in vault (id md-2f0d496cd892a975): https://arab.news/bcxvu
+[23:37:40] Recovered: https://share.google/BHl1SImvG4SEyXi6U
+[23:37:44] Fetched via trafilatura: https://www.google.com/share.google?q=Pj4Tc2aJdzO9ge31y
+[23:37:44] Extracted 6005 chars from HTML
+[23:37:44] Already in vault (id md-4edeffc5b6563f75): https://archaeologymag.com/2026/05/medieval-notebook-found-in-german-latrine/
+[23:37:44] Recovered: https://share.google/Pj4Tc2aJdzO9ge31y
+[23:37:45] Fetched via trafilatura: https://www.google.com/share.google?q=QzwrWIE4G6ECaT43Q
+[23:37:45] Extracted 8508 chars from HTML
+[23:37:45] Already in vault (id md-4f6c10947991b1a9): https://www.autoexpress.co.uk/citroen/365697/citroen-2cv-return-ps13k-ev-city-ca
+[23:37:45] Recovered: https://share.google/QzwrWIE4G6ECaT43Q
+[23:37:47] Fetched via trafilatura: https://www.google.com/share.google?q=bWi85jTZuRiCVaifn
+[23:37:47] Extracted 10119 chars from HTML
+[23:37:47] Already in vault (id md-aa50946bb99b87e1): https://www.autonocion.com/us/solar-farm-desert-uae-german/
+[23:37:47] Recovered: https://share.google/bWi85jTZuRiCVaifn
+[23:37:49] Fetched via trafilatura: https://www.google.com/share.google?q=YOMcyqZid4bHMteMd
+[23:37:49] Extracted 8452 chars from HTML
+[23:37:49] Already in vault (id md-049c2afab64cd77b): https://www.bbc.com/russian/articles/c0ler0e4pxpo
+[23:37:49] Recovered: https://share.google/YOMcyqZid4bHMteMd
+[23:37:51] Fetched via trafilatura: https://www.google.com/share.google?q=ZjKUOPq0U0mi5eEhX
+[23:37:51] Extracted 3443 chars from HTML
+[23:37:51] Already in vault (id md-f0e1067d9ab83626): https://www.bbc.co.uk//learningenglish/features/the-english-we-speak_2026/ep-260
+[23:37:51] Recovered: https://share.google/ZjKUOPq0U0mi5eEhX
+[23:37:52] Fetched via trafilatura: https://www.businessinsider.com/bi-today-sunday-newsletter-vibe-coding-mode-2026
+[23:37:52] Extracted 3440 chars from HTML
+[23:37:52] Already in vault (id md-130d9cd89687423f): https://www.businessinsider.com/bi-today-sunday-newsletter-vibe-coding-mode-2026
+[23:37:52] Recovered: https://search.app/vRVpE
+[23:37:54] Fetched via trafilatura: https://www.google.com/share.google?q=f1YaRw6ZjsiJylAiG
+[23:37:54] Extracted 5893 chars from HTML
+[23:37:54] Already in vault (id md-ffcf4c85f9deb13e): https://www.cbsnews.com/news/researchers-ireland-uncover-oldest-english-poem-for
+[23:37:54] Recovered: https://share.google/f1YaRw6ZjsiJylAiG
+[23:37:57] Fetched via trafilatura: https://www.google.com/share.google?q=H22i1fLmhQNYqSnWN
+[23:37:57] Extracted 5721 chars from HTML
+[23:37:57] Already in vault (id md-9bc0c50894a75c5e): https://www.channelnewsasia.com/sustainability/tropical-forest-loss-eases-in-202
+[23:37:57] Recovered: https://share.google/H22i1fLmhQNYqSnWN
+[23:37:58] Fetched via trafilatura: https://www.cnbc.com/2026/03/20/ive-been-a-neuroscientist-for-20-years-i-keep-my
+[23:37:58] Extracted 4319 chars from HTML
+[23:37:58] Already in vault (id md-fa401a731b3ad48f): https://www.cnbc.com/2026/03/20/ive-been-a-neuroscientist-for-20-years-i-keep-my
+[23:37:58] Recovered: https://search.app/5qW23
+[23:37:59] Fetched via trafilatura: https://www.google.com/share.google?q=90ovJninY3hL2FrCZ
+[23:37:59] Extracted 8594 chars from HTML
+[23:38:00] Already in vault (id md-d6f40057760e4bcf): https://www.cnx-software.com/2026/05/16/anthropics-open-source-claude-desktop-bu
+[23:38:00] Recovered: https://share.google/90ovJninY3hL2FrCZ
+[23:38:01] Fetched via trafilatura: https://www.google.com/share.google?q=qiquwD7BKSce7rcqg
+[23:38:01] Extracted 3026 chars from HTML
+[23:38:01] Already in vault (id md-7a510b63236abf72): https://www.cnx-software.com/2026/04/27/kerneluno-a-lightweight-os-for-arduino-u
+[23:38:01] Recovered: https://share.google/qiquwD7BKSce7rcqg
+[23:38:03] Fetched via trafilatura: https://www.google.com/share.google?q=h9Yg45hoAAymh5L9C
+[23:38:03] Extracted 6322 chars from HTML
+[23:38:03] Already in vault (id md-3662623f18c22411): https://www.cnx-software.com/2026/05/04/esp32-p4-esp32-c5-board-features-raspber
+[23:38:03] Recovered: https://share.google/h9Yg45hoAAymh5L9C
+[23:38:05] Fetched via trafilatura: https://www.google.com/share.google?q=HQixzAsxjIiS57Sa5
+[23:38:05] Extracted 5430 chars from HTML
+[23:38:05] Already in vault (id md-64667addad7246a1): https://www.cnx-software.com/2026/05/14/clawdmeter-a-diy-esp32-s3-desk-dashboard
+[23:38:05] Recovered: https://share.google/HQixzAsxjIiS57Sa5
+[23:38:07] Fetched via trafilatura: https://www.google.com/share.google?q=guHXvIn2MjCtmkyJN
+[23:38:07] Extracted 7153 chars from HTML
+[23:38:07] Already in vault (id md-80d926b6d9f70056): https://www.cnx-software.com/2026/05/22/esp32-s31-development-boards-iot-smart-a
+[23:38:07] Recovered: https://share.google/guHXvIn2MjCtmkyJN
+[23:38:09] Fetched via trafilatura: https://www.google.com/share.google?q=Y0FE0daEsR0Punwih
+[23:38:09] Extracted 7515 chars from HTML
+[23:38:09] Already in vault (id md-ee13c148b2baa5ab): https://en.clickpetroleoegas.com.br/great-atlantic-sargassum-belt-has-ceased-to-
+[23:38:09] Recovered: https://share.google/Y0FE0daEsR0Punwih
+[23:38:11] Fetched via trafilatura: https://www.google.com/share.google?q=Qt4lyvyahx3otncBJ
+[23:38:11] Extracted 8854 chars from HTML
+[23:38:11] Already in vault (id md-3459a64de6cba175): https://en.clickpetroleoegas.com.br/a-giant-brown-band-visible-from-space-approx
+[23:38:11] Recovered: https://share.google/Qt4lyvyahx3otncBJ
+[23:38:14] Fetched via trafilatura: https://www.google.com/share.google?q=qI6oEkD6BhhjGVQlI
+[23:38:14] Extracted 2206 chars from HTML
+[23:38:14] Already in vault (id md-04e9b18311d6b3c8): https://circuitdigest.com/news/esp32-s3-runs-a-289-million-parameter-llm-borrowi
+[23:38:14] Recovered: https://share.google/qI6oEkD6BhhjGVQlI
+[23:38:15] Fetched via trafilatura: https://collider.com/good-luck-have-fun-dont-die-strangest-sci-fi-movie-of-2026-
+[23:38:15] Extracted 4831 chars from HTML
+[23:38:15] Already in vault (id md-5e4c32a7647c8992): https://collider.com/good-luck-have-fun-dont-die-strangest-sci-fi-movie-of-2026-
+[23:38:15] Recovered: https://search.app/BHtSj
+[23:38:17] Fetched via trafilatura: https://collider.com/anya-taylor-joy-sci-fi-adventure-sequel-the-super-mario-gal
+[23:38:17] Extracted 3819 chars from HTML
+[23:38:17] Already in vault (id md-4393a8d902dd9b35): https://collider.com/anya-taylor-joy-sci-fi-adventure-sequel-the-super-mario-gal
+[23:38:17] Recovered: https://search.app/BhuCb
+[23:38:18] Fetched via trafilatura: https://www.google.com/share.google?q=Z1ee0FWaDx4wTynIn
+[23:38:18] Extracted 4729 chars from HTML
+[23:38:18] Already in vault (id md-3af640a886e3dca3): https://blog.comfy.org/p/new-open-source-models-now-in-comfyui
+[23:38:18] Recovered: https://share.google/Z1ee0FWaDx4wTynIn
+[23:38:22] Fetched via trafilatura: https://www.google.com/share.google?q=05K1Vm0Aw1o4fiMGt
+[23:38:22] Extracted 4157 chars from HTML
+[23:38:22] Already in vault (id md-9ce9d105a6130227): https://www.comss.ru/page.php?id=20058
+[23:38:22] Recovered: https://share.google/05K1Vm0Aw1o4fiMGt
+[23:38:23] Fetched via trafilatura: https://www.google.com/share.google?q=2LsKR3rBvlwC9xt2T
+[23:38:23] Extracted 3609 chars from HTML
+[23:38:23] Already in vault (id md-76d80e642e879c36): https://www.comss.ru/page.php?id=20465
+[23:38:23] Recovered: https://share.google/2LsKR3rBvlwC9xt2T
+[23:38:24] Fetched via trafilatura: https://www.google.com/share.google?q=QJ8jwylhwz9OxNhOu
+[23:38:24] Extracted 2993 chars from HTML
+[23:38:24] Already in vault (id md-5e2b4e714c0373bd): https://www.creativebloq.com/3d/autodesks-free-new-tool-offers-an-easy-way-in-to
+[23:38:24] Recovered: https://share.google/QJ8jwylhwz9OxNhOu
+[23:38:26] Fetched via trafilatura: https://www.google.com/share.google?q=PJHvRSpZU2TtaTOMn
+[23:38:26] Extracted 4216 chars from HTML
+[23:38:26] Already in vault (id md-513220cda75e82d0): https://www.creativebloq.com/design/branding/4creatives-perpetually-unfinished-l
+[23:38:26] Recovered: https://share.google/PJHvRSpZU2TtaTOMn
+[23:38:29] Fetched via trafilatura: https://www.google.com/share.google?q=OV7vwPbAr5DE9MEml
+[23:38:29] Extracted 2662 chars from HTML
+[23:38:29] Already in vault (id md-4ee6e23e5239753c): https://decrypt.co/366876/solana-google-cloud-launch-stablecoin-payments-service
+[23:38:29] Recovered: https://share.google/OV7vwPbAr5DE9MEml
+[23:38:30] Trafilatura empty: https://dengarden.com/shopping/ikea-solvinden-lamp
+[23:38:32] Fetch refused for https://dengarden.com/shopping/ikea-solvinden-lamp: HTTP 403 for https://dengarden.com/shopping/ikea-solvinden-lamp
+[23:38:32] Still failing (blocked): https://search.app/UCVjq
+[23:38:34] Fetched via trafilatura: https://www.google.com/share.google?q=ONKamVlEjLtYPyGbO
+[23:38:34] Extracted 2974 chars from HTML
+[23:38:34] Already in vault (id md-af9054139a9bae59): https://www.designboom.com/architecture/floating-ring-installation-broissin-arch
+[23:38:34] Recovered: https://share.google/ONKamVlEjLtYPyGbO
+[23:38:37] Fetched via trafilatura: https://www.google.com/share.google?q=hAkk7eTpnpsxZhoPD
+[23:38:37] Extracted 4507 chars from HTML
+[23:38:37] Already in vault (id md-38fea332ded03c5e): https://www.dezeen.com/2026/05/05/oriente-green-campus-portugal-kpf-saraivaassoc
+[23:38:37] Recovered: https://share.google/hAkk7eTpnpsxZhoPD
+Retried: 88 recovered, 104 still failing
