@@ -86,6 +86,41 @@ class HttpEngine:
             return data["choices"][0]["message"]["content"]
 
 
+STUDIO_BASE_URL = "http://desktop-vdsrh2e:8888/v1"
+STUDIO_PRIMARY_MODEL = "unsloth/gemma-4-26B-A4B-it-qat-GGUF"
+STUDIO_FALLBACK_MODEL = "ollama/qwen3.6:27b"
+STUDIO_SETTINGS_PATH = Path.home() / ".pi" / "agent" / "models.json"
+
+
+def read_studio_api_key() -> str:
+    try:
+        key = json.loads(STUDIO_SETTINGS_PATH.read_text())["providers"]["studio"]["apiKey"]
+        if not isinstance(key, str) or not key.strip():
+            raise ValueError("empty key")
+        return key
+    except (OSError, ValueError, KeyError, TypeError):
+        raise RuntimeError("Cannot read providers.studio.apiKey from Studio settings") from None
+
+
+class StudioEngine(HttpEngine):
+    """Read credentials at request time; keep secrets and response bodies out of errors."""
+
+    def _headers(self) -> dict[str, str]:
+        return {"Authorization": f"Bearer {read_studio_api_key()}"}
+
+    def chat_json(self, *args, **kwargs) -> str:
+        try:
+            return super().chat_json(*args, **kwargs)
+        except Exception:
+            raise RuntimeError("Studio request failed") from None
+
+    def list_models(self) -> list[str]:
+        try:
+            return super().list_models()
+        except Exception:
+            raise RuntimeError("Studio model listing failed") from None
+
+
 def _resolve_binary(name: str) -> str:
     """Absolute path to a CLI that may live outside launchd's PATH."""
     found = shutil.which(name)
@@ -203,6 +238,8 @@ def make_engine(cfg: Config):
     provider = cfg.engine.provider
     timeout = cfg.llm.timeout_seconds
 
+    if provider == "studio":
+        return StudioEngine(cfg.engine.base_url or STUDIO_BASE_URL, "", timeout, json_mode=False)
     if provider == "ollama":
         return HttpEngine("http://localhost:11434/v1", "ollama", timeout)
     if provider == "omlx":

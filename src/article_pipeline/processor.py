@@ -17,7 +17,7 @@ from .stage1_ingest import ingest_article
 from .stage2_summarize import summarize
 from .stage3_render_markdown import build_content
 from .stage3_render_typst import note_id, render_typst_note
-from .tag_scan import VaultNote, find_related, scan_vault, vocabulary
+from .tag_scan import parse_header, VaultNote, find_related, scan_vault, vocabulary
 from .youtube import YouTubePlaylistVideo
 
 logger = logging.getLogger("article_pipeline")
@@ -136,6 +136,7 @@ def process_article(
     engine,
     force: bool = False,
     force_youtube_asr: bool = False,
+    result_paths: Optional[List[Path]] = None,
 ) -> Tuple[bool, ProcessingError]:
     ingest, err = ingest_article(
         url,
@@ -170,7 +171,17 @@ def process_article(
         # a fresh one per article — a tag nobody else uses groups nothing.
         tag_vocabulary = vocabulary(vault)
         nid = note_id(final_url)
-        if not force and any(n.id == nid for n in vault_notes):
+        existing_path = None
+        if not force and result_paths is not None:
+            # Job retries need the actual path, including beyond the related-scan cap.
+            for candidate in sorted(articles_dir.glob("*.typ")):
+                header = parse_header(candidate.read_text(encoding="utf-8", errors="ignore"))
+                if header and header.id == nid:
+                    existing_path = candidate
+                    break
+        if not force and (existing_path or any(n.id == nid for n in vault_notes)):
+            if result_paths is not None and existing_path:
+                result_paths.append(existing_path)
             logger.info("Already in vault (id %s): %s", nid, final_url[:80])
             return True, ProcessingError.UNKNOWN
     else:
@@ -267,6 +278,8 @@ def process_article(
             )
             return False, ProcessingError.PARSE_ERROR
 
+    if result_paths is not None:
+        result_paths.append(out_path)
     logger.info("Saved: %s", out_path.name)
 
     playlist_videos = ingest.get("playlist_videos") or []

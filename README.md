@@ -50,3 +50,51 @@ YouTube without captions) become short notes marked
 source ever becomes readable.
 
 See `PLAN.md` for the implementation checklist.
+
+## TyLog article worker
+
+The independent worker drains `~/Nextcloud/TyLogVault/_system/jobs/articles/*.json`.
+A producer writes `{ "url": "https://example.com/article", "title": "optional",
+"shared_at": "2026-10-05T12:00:00Z", "status": "queued" }`. Jobs transition through
+`processing` to `done` with a vault-relative `note_path`, or `error` with `reason`.
+Other producer fields are preserved. Set an error job back to `queued` to retry.
+Interrupted `processing` jobs resume on the next run; existing article IDs prevent
+another note being written. Run workers on one Mac only: the lock coordinates
+local processes, not machines through Nextcloud.
+
+```bash
+uv sync
+uv run tylog-worker --once
+uv run tylog-worker --watch
+uv run tylog-worker --once --vault /path/to/test-vault
+uv run tylog-worker --once --provider configured  # use config.yaml's engine
+```
+
+By default the worker uses Studio at `http://desktop-vdsrh2e:8888/v1`, first
+`unsloth/gemma-4-26B-A4B-it-qat-GGUF`, then `ollama/qwen3.6:27b` through the same
+endpoint. The key is read at request time from `~/.pi/agent/models.json`, field
+`providers.studio.apiKey`; credentials and HTTP response bodies are excluded from
+Studio error messages. No key is saved in pipeline config or the launchd plist.
+The worker uses the existing ingest, summary, Typst note, image, related-link,
+compile-check and vault-index stages, with the configured vault/output settings.
+It always outputs Typst. Existing `article-pipeline` and Nextcloud Notes inbox
+commands keep using their existing configuration.
+
+To use Studio with the Notes route too, set `engine.provider: studio` in
+`config.yaml` and set `primary_model` / `fallback_model` to the models above;
+`engine.base_url` optionally overrides the Studio endpoint.
+
+Generate a launchd agent (the generator writes the plist; it does not load it):
+
+```bash
+uv run tylog-worker --launchd-plist ~/Library/LaunchAgents/org.tylog.worker.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/org.tylog.worker.plist
+```
+
+The agent runs once at load, on jobs-directory changes, and every 60 seconds
+(to catch sync changes missed by directory notifications). It uses an absolute
+`uv` path and the repo working directory. To stop it:
+
+```bash
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/org.tylog.worker.plist
+```

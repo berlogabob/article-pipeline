@@ -18,6 +18,7 @@ dependencies = [
 
 [project.scripts]
 article-pipeline = "article_pipeline.main:main"
+tylog-worker = "article_pipeline.worker:main"
 
 [dependency-groups]
 dev = [

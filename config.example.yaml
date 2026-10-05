@@ -2,12 +2,13 @@
 # that writes config.yaml (gitignored) with your engine/model/format answers.
 
 engine:
-  provider: null          # ollama | omlx | claude | codex  (set by wizard)
+  provider: null          # ollama | omlx | claude | codex | studio
   base_url: null          # filled for http engines; null for cli engines
   primary_model: null
   fallback_model: null    # optional; null disables fallback
   # NOTE: no api keys are stored here. The oMLX key is read live from
-  # ~/.omlx/settings.json (auth.api_key) on every run.
+  # ~/.omlx/settings.json (auth.api_key) on every run. Studio reads
+  # ~/.pi/agent/models.json (providers.studio.apiKey) at request time.
 
 output_format: null       # markdown | typst  (set by wizard)
 

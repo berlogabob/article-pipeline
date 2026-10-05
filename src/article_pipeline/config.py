@@ -11,7 +11,7 @@ CONFIG_FILENAME = "config.yaml"
 
 
 class EngineConfig(BaseModel):
-    provider: Optional[Literal["ollama", "omlx", "claude", "codex"]] = None
+    provider: Optional[Literal["ollama", "omlx", "claude", "codex", "studio"]] = None
     base_url: Optional[str] = None
     primary_model: Optional[str] = None
     fallback_model: Optional[str] = None
