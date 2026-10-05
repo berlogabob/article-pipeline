@@ -74,6 +74,9 @@ def build_header(
     date: Optional[str],
     tags: List[str],
     properties: Dict,
+    *,
+    kind: str = "article",
+    project: Optional[str] = None,
 ) -> str:
     return (
         '#import "/_system/tylog.typ" as tylog\n'
@@ -81,11 +84,11 @@ def build_header(
         "#show: tylog.note.with(\n"
         f"  id: {_typst_string(nid)},\n"
         f"  title: {_typst_string(title)},\n"
-        '  kind: "article",\n'
+        f"  kind: {_typst_string(kind)},\n"
         f"  date: {_typst_value(date)},\n"
         f"  tags: {_typst_list(tags)},\n"
         "  aliases: (),\n"
-        "  project: none,\n"
+        f"  project: {_typst_value(project)},\n"
         f"  properties: {_typst_dict(properties)},\n"
         ")\n"
     )

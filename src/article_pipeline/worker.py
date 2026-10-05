@@ -15,6 +15,7 @@ from .config import Config, EngineConfig, load_config
 from .engine import STUDIO_BASE_URL, STUDIO_PRIMARY_MODEL, STUDIO_FALLBACK_MODEL, make_engine
 from .main import _project_root, _finalize_vault
 from .processor import process_article
+from .hub import sync_hub
 
 
 def write_job(path: Path, job: dict) -> None:
@@ -109,6 +110,7 @@ def main(argv=None) -> int:
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--once", action="store_true", help="drain pending jobs and exit (default)")
     mode.add_argument("--watch", action="store_true", help="poll for jobs continuously")
+    parser.add_argument("--sync-hub", action="store_true", help="sync consultations and ideas")
     parser.add_argument("--vault", type=Path, help="override the configured TyLog vault")
     parser.add_argument("--provider", choices=["studio", "configured"], default="studio",
                         help="Studio defaults, or the existing config.yaml engine")
@@ -131,12 +133,24 @@ def main(argv=None) -> int:
         args.launchd_plist.expanduser().write_bytes(launchd_plist(root, vault, args.provider))
         return 0
     try:
+        next_hub = 0
         while True:
+            hub_errors = 0
+            if args.sync_hub or args.watch:
+                if time.monotonic() >= next_hub:
+                    try:
+                        sync_hub(cfg)
+                    except RuntimeError:
+                        print("Hub sync failed")
+                        hub_errors = 1
+                    next_hub = time.monotonic() + 600
+            if args.sync_hub and not (args.once or args.watch):
+                return hub_errors
             done, errors = drain_jobs(cfg)
             if done or errors or not args.watch:
                 print(f"Jobs: {done} done, {errors} errors")
             if not args.watch:
-                return 1 if errors else 0
+                return 1 if errors or hub_errors else 0
             time.sleep(5)
     except KeyboardInterrupt:
         return 0

@@ -124,6 +124,7 @@ def test_studio_runtime_key_and_sanitized_errors(tmp_path, monkeypatch, caplog):
 
 
 def test_cli_and_plist(cfg, tmp_path, monkeypatch):
+    monkeypatch.setattr(worker, "sync_hub", lambda cfg: None)
     monkeypatch.setattr(worker, "load_config", lambda root: cfg.model_copy(deep=True))
     monkeypatch.setattr(worker.shutil, "which", lambda name: "/opt/homebrew/bin/uv")
     plist = tmp_path / "worker.plist"

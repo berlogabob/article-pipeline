@@ -66,9 +66,31 @@ local processes, not machines through Nextcloud.
 uv sync
 uv run tylog-worker --once
 uv run tylog-worker --watch
+uv run tylog-worker --sync-hub  # one consultation/idea sync, without article jobs
 uv run tylog-worker --once --vault /path/to/test-vault
 uv run tylog-worker --once --provider configured  # use config.yaml's engine
 ```
+
+Hub sync reads `SUPABASE_URL` and `STAFF_EMAIL` from `~/.tylog-supabase.env`.
+When `SUPABASE_SERVICE_KEY` is set, it uses that key as both apikey and Bearer,
+bypasses RLS, and resolves your staff person by email. Otherwise it uses
+`SUPABASE_ANON_KEY` and `STAFF_PASSWORD` for the password grant and staff JWT.
+Consultations are limited to your staff ID; all ideas are synced for the staff
+view. Keep the credentials file private (mode 600). `--watch` syncs immediately
+and every ten minutes. The generated launchd agent uses `--once`, so run
+`--watch` or schedule `--sync-hub` separately for Hub polling.
+
+Consultations become `events/YYYY/MM/consult-<id>.typ`; ideas become
+`ideas/<id>.typ`. Sync updates headers and the `tylog:hub-begin`/`tylog:hub-end`
+block, preserving prose outside it. Idea History records observed status, AI,
+and connection changes; it cannot reconstruct changes between polls.
+Local notes with kind `idea` or tag `idea`/`#idea` are submitted as the staff
+person, using their body as the RPC input (10–4000 characters). Their header
+receives `hub_id`, and their existing path and note ID remain the link target.
+Changing `properties.status` to `new`, `approved`, or `archived` pushes it back
+to the Hub; local changes take precedence when both sides changed since the
+last poll. `_system/hub-sync.json` stores snapshots and pending submission
+tokens for retries; keep it with the vault and private, like the idea notes.
 
 By default the worker uses Studio at `http://desktop-vdsrh2e:8888/v1`, first
 `unsloth/gemma-4-26B-A4B-it-qat-GGUF`, then `ollama/qwen3.6:27b` through the same
