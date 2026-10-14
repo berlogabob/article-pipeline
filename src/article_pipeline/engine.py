@@ -7,6 +7,7 @@ Both flavors expose the same interface:
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -89,24 +90,39 @@ class HttpEngine:
 STUDIO_BASE_URL = "http://desktop-vdsrh2e:8888/v1"
 STUDIO_PRIMARY_MODEL = "unsloth/gemma-4-26B-A4B-it-qat-GGUF"
 STUDIO_FALLBACK_MODEL = "ollama/qwen3.6:27b"
-STUDIO_SETTINGS_PATH = Path.home() / ".pi" / "agent" / "models.json"
+STUDIO_SETTINGS_PATH = Path("~/.pi/agent/models.json")
 
 
-def read_studio_api_key() -> str:
-    try:
-        key = json.loads(STUDIO_SETTINGS_PATH.read_text())["providers"]["studio"]["apiKey"]
-        if not isinstance(key, str) or not key.strip():
-            raise ValueError("empty key")
-        return key
-    except (OSError, ValueError, KeyError, TypeError):
-        raise RuntimeError("Cannot read providers.studio.apiKey from Studio settings") from None
+def read_studio_api_key(connection_id: str = "studio") -> str:
+    env_id = re.sub(r"[^A-Z0-9]", "_", connection_id.upper())
+    for name in ("TYLOG_LLM_KEY", f"TYLOG_KEY_{env_id}"):
+        key = os.getenv(name, "").strip()
+        if key:
+            return key
+    for path, fields in (
+        (Path.home() / ".tylog/keys.json", (connection_id,)),
+        (STUDIO_SETTINGS_PATH.expanduser(), ("providers", connection_id, "apiKey")),
+    ):
+        try:
+            key = json.loads(path.read_text(encoding="utf-8"))
+            for field in fields:
+                key = key[field]
+            if isinstance(key, str) and key.strip():
+                return key
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+    raise RuntimeError("Cannot read API key for LLM connection") from None
 
 
 class StudioEngine(HttpEngine):
     """Read credentials at request time; keep secrets and response bodies out of errors."""
 
+    def __init__(self, *args, connection_id: str = "studio", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.connection_id = connection_id
+
     def _headers(self) -> dict[str, str]:
-        return {"Authorization": f"Bearer {read_studio_api_key()}"}
+        return {"Authorization": f"Bearer {read_studio_api_key(self.connection_id)}"}
 
     def chat_json(self, *args, **kwargs) -> str:
         try:
@@ -233,13 +249,14 @@ def read_omlx_api_key() -> str:
     return api_key
 
 
-def make_engine(cfg: Config):
+def make_engine(cfg: Config, connection_id: str = "studio"):
     """Build the engine client configured by cfg.engine."""
     provider = cfg.engine.provider
     timeout = cfg.llm.timeout_seconds
 
     if provider == "studio":
-        return StudioEngine(cfg.engine.base_url or STUDIO_BASE_URL, "", timeout, json_mode=False)
+        return StudioEngine(cfg.engine.base_url or STUDIO_BASE_URL, "", timeout,
+                            json_mode=False, connection_id=connection_id)
     if provider == "ollama":
         return HttpEngine("http://localhost:11434/v1", "ollama", timeout)
     if provider == "omlx":

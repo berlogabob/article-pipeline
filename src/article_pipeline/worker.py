@@ -32,7 +32,7 @@ def write_job(path: Path, job: dict) -> None:
         Path(name).unlink(missing_ok=True)
 
 
-def drain_jobs(cfg: Config, engine=None) -> tuple[int, int]:
+def drain_jobs(cfg: Config, engine=None, connection_id: str = "studio") -> tuple[int, int]:
     vault = Path(cfg.typst.vault_dir).expanduser().resolve()
     jobs = vault / "_system/jobs/articles"
     jobs.mkdir(parents=True, exist_ok=True)
@@ -69,7 +69,7 @@ def drain_jobs(cfg: Config, engine=None) -> tuple[int, int]:
                 if parsed.scheme not in ("http", "https") or not parsed.hostname:
                     raise ValueError("invalid URL")
                 if engine is None:
-                    engine = make_engine(cfg)
+                    engine = make_engine(cfg, connection_id=connection_id)
                 paths = []
                 ok, err = process_article(url, title, cfg, engine, result_paths=paths)
                 if ok and paths:
@@ -105,6 +105,33 @@ def launchd_plist(root: Path, vault: Path, provider: str = "studio") -> bytes:
     })
 
 
+def _apply_ai_settings(cfg: Config) -> str | None:
+    """Apply a valid synced article connection without reading any credentials."""
+    try:
+        path = Path(cfg.typst.vault_dir).expanduser() / "_system/settings/ai.json"
+        settings = json.loads(path.read_text(encoding="utf-8"))
+        if settings["schema"] != 1 or not isinstance(settings["connections"], list):
+            return None
+        task = settings["tasks"]["articles"]
+        connection_id = task["connection"]
+        if not isinstance(connection_id, str) or not connection_id.strip():
+            return None
+        connection = next(c for c in settings["connections"] if c["id"] == connection_id)
+        url = connection["url"]
+        models = (task.get("model"), task.get("fallback_model"))
+        if not isinstance(url, str) or not url.strip():
+            return None
+        if any(model is not None and not isinstance(model, str) for model in models):
+            return None
+    except (OSError, ValueError, KeyError, TypeError, AttributeError, StopIteration):
+        return None
+    cfg.engine.base_url = url
+    for field, model in zip(("primary_model", "fallback_model"), models):
+        if model and model.strip():
+            setattr(cfg.engine, field, model)
+    return connection_id
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="tylog-worker")
     mode = parser.add_mutually_exclusive_group()
@@ -127,6 +154,7 @@ def main(argv=None) -> int:
                                   fallback_model=STUDIO_FALLBACK_MODEL)
     elif cfg.engine.provider is None:
         parser.error("--provider configured requires an engine in config.yaml")
+    connection_id = _apply_ai_settings(cfg)
     if args.launchd_plist:
         vault = Path(cfg.typst.vault_dir).expanduser().resolve()
         (vault / "_system/jobs/articles").mkdir(parents=True, exist_ok=True)
@@ -146,7 +174,8 @@ def main(argv=None) -> int:
                     next_hub = time.monotonic() + 600
             if args.sync_hub and not (args.once or args.watch):
                 return hub_errors
-            done, errors = drain_jobs(cfg)
+            done, errors = (drain_jobs(cfg, connection_id=connection_id)
+                            if connection_id else drain_jobs(cfg))
             if done or errors or not args.watch:
                 print(f"Jobs: {done} done, {errors} errors")
             if not args.watch:
