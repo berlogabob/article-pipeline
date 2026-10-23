@@ -89,7 +89,7 @@ class HttpEngine:
 
 STUDIO_BASE_URL = "http://desktop-vdsrh2e:8888/v1"
 STUDIO_PRIMARY_MODEL = "unsloth/gemma-4-26B-A4B-it-qat-GGUF"
-STUDIO_FALLBACK_MODEL = "ollama/qwen3.6:27b"
+STUDIO_FALLBACK_MODEL = "ollama/ornith-1.5:35b"
 STUDIO_SETTINGS_PATH = Path("~/.pi/agent/models.json")
 
 
