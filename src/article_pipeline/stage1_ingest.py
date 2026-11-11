@@ -76,7 +76,14 @@ def ingest_article(
             playlist_videos = playlist_metadata.get("videos", [])
         elif is_yt:
             extracted = get_youtube_transcript(final_url, force_asr=force_youtube_asr)
-            if not extracted:
+            if extracted:
+                try:
+                    video_metadata = get_youtube_video_metadata(final_url)
+                    if video_metadata:
+                        resolved_title = video_metadata["title"]
+                except Exception as e:
+                    logger.warning("Failed to fetch YouTube title for %s: %s", final_url[:80], e)
+            else:
                 # Every transcript layer is exhausted, but oEmbed still knows
                 # the title and author. A stub note beats losing the link —
                 # captions can be absent for years, and the URL is the part

@@ -66,6 +66,10 @@ def _utf8_safe(text: str) -> str:
     return re.sub(r"[\ud800-\udfff]", "�", text)
 
 
+def _title_from_url(url: str) -> str:
+    return (urlparse(url).hostname or "").removeprefix("www.")
+
+
 def junk_reason(title: str, url: str) -> Optional[str]:
     """Why this page should be a terminal failure instead of a note, or None.
 
@@ -152,7 +156,7 @@ def process_article(
     # The passed-in `title` often comes from an inbox filename or link text
     # and can be generic (e.g. "codex-integration-test"); prefer the title
     # resolved from the page's own HTML/metadata when we have one.
-    resolved_title = ingest["resolved_title"] or title
+    resolved_title = ingest["resolved_title"] or title or _title_from_url(final_url)
 
     if not force:
         junk = junk_reason(resolved_title, final_url)

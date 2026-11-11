@@ -176,6 +176,28 @@ def test_process_article_falls_back_to_passed_title_when_unresolved(tmp_path):
     assert out_path.exists()
 
 
+def test_process_article_falls_back_to_host_when_title_empty(tmp_path):
+    metadata = ArticleMetadata(summary_ru="Summary", tags=["tag"], author=None, verification_notes="OK")
+    cfg = Config()
+    cfg.output_format = "typst"
+    cfg.typst.vault_dir = str(tmp_path)
+    url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    ingest_result = {
+        "expanded_url": url, "normalized_url": normalize_url(url),
+        "resolved_title": "", "extracted_text": _BODY_PAD, "image_urls": [],
+        "is_youtube": True, "source": "youtube.com", "canonical_url": "",
+    }
+    with patch("article_pipeline.processor.ingest_article", return_value=(ingest_result, None)), patch(
+        "article_pipeline.processor.summarize", return_value=metadata
+    ):
+        ok, err = process_article(url, "", cfg, engine=None, force=True)
+
+    assert ok and err.value == "unknown"
+    content = next(tmp_path.rglob("*.typ")).read_text(encoding="utf-8")
+    assert 'title: ""' not in content
+    assert "\n= youtube.com\n" in content
+
+
 def test_ingest_article_uses_html_path_for_youtube_channel_urls():
     with patch(
         "article_pipeline.stage1_ingest.expand_url", side_effect=lambda url: url
@@ -236,6 +258,40 @@ def test_a_captionless_youtube_video_falls_back_to_oembed_metadata():
     assert ingest["metadata_only"] is True, "the note must admit it has no transcript"
 
 
+def test_youtube_transcript_uses_oembed_title():
+    url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    with patch("article_pipeline.stage1_ingest.expand_url", return_value=url), patch(
+        "article_pipeline.stage1_ingest.get_youtube_transcript", return_value=_BODY_PAD
+    ), patch("article_pipeline.stage1_ingest.get_youtube_video_metadata", return_value={
+        "title": "Video title", "text": "metadata", "canonical_url": "https://example.com/"
+    }):
+        ingest, err = ingest_article(url, "")
+    assert err.value == "unknown" and ingest is not None
+    assert ingest["resolved_title"] == "Video title"
+    assert ingest["extracted_text"] == _BODY_PAD
+    assert ingest["expanded_url"] == url and ingest["canonical_url"] == ""
+
+
+def test_youtube_transcript_survives_missing_oembed_title():
+    url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    with patch("article_pipeline.stage1_ingest.expand_url", return_value=url), patch(
+        "article_pipeline.stage1_ingest.get_youtube_transcript", return_value=_BODY_PAD
+    ), patch("article_pipeline.stage1_ingest.get_youtube_video_metadata", return_value=None):
+        ingest, err = ingest_article(url, "")
+    assert err.value == "unknown" and ingest is not None
+    assert ingest["resolved_title"] == ""
+
+
+def test_youtube_transcript_survives_oembed_exception():
+    url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    with patch("article_pipeline.stage1_ingest.expand_url", return_value=url), patch(
+        "article_pipeline.stage1_ingest.get_youtube_transcript", return_value=_BODY_PAD
+    ), patch("article_pipeline.stage1_ingest.get_youtube_video_metadata", side_effect=RuntimeError("offline")):
+        ingest, err = ingest_article(url, "")
+    assert err.value == "unknown" and ingest is not None
+    assert ingest["resolved_title"] == ""
+
+
 def test_a_captionless_youtube_video_with_no_metadata_still_fails():
     with patch(
         "article_pipeline.stage1_ingest.expand_url", side_effect=lambda url: url
@@ -258,7 +314,9 @@ def test_ingest_article_passes_force_youtube_asr_to_transcript_fetcher():
     ), patch(
         "article_pipeline.stage1_ingest.get_youtube_transcript",
         return_value="forced transcript text." + _BODY_PAD,
-    ) as transcript:
+    ) as transcript, patch(
+        "article_pipeline.stage1_ingest.get_youtube_video_metadata", return_value=None
+    ):
         ingest, err = ingest_article(
             "https://www.youtube.com/watch?v=gNZaDBeHgSk",
             "old title",
