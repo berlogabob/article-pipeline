@@ -152,6 +152,8 @@ def test_a_page_with_no_open_graph_tags_is_still_a_failure():
     with patch(
         "article_pipeline.html_parser.fetch_html",
         return_value="<html><head><title>t</title></head><body><div></div></body></html>",
+    ), patch("article_pipeline.html_parser.fetch_reddit_post_article", return_value=None), patch(
+        "article_pipeline.html_parser.fetch_reader_article", return_value=None
     ):
         assert fetch_and_extract_article("https://www.reddit.com/r/x/comments/y") is None
 

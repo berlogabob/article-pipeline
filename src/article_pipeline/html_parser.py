@@ -372,7 +372,13 @@ def _fetch_and_extract_article(
     r.jina.ai reader is the last resort for blocked or JS-only pages
     (fetch_reader_article) — both ported from the old logseq-processor.
     """
-    reddit_article = fetch_reddit_post_article(url, timeout=timeout)
+    try:
+        reddit_article = fetch_reddit_post_article(url, timeout=timeout)
+    except FetchError:
+        reader_article = fetch_reader_article(url, timeout=timeout)
+        if reader_article:
+            return reader_article
+        raise
     if reddit_article:
         return reddit_article
 
@@ -595,7 +601,7 @@ def _huggingface_metadata_article(
 
 
 def fetch_reddit_post_article(url: str, timeout: int = 15) -> Optional[ExtractedArticle]:
-    """Scrape a Reddit post from old.reddit.com, which still serves plain HTML.
+    """Fetch Reddit JSON, falling back to old.reddit.com plain HTML.
 
     www.reddit.com is a JS shell trafilatura extracts nothing from. Share
     links (/r/sub/s/xxxx) are resolved to their /comments/ URL first.
@@ -615,6 +621,76 @@ def fetch_reddit_post_article(url: str, timeout: int = 15) -> Optional[Extracted
             return None
         if "/comments/" not in parsed.path:
             return None
+
+    json_url = f"https://www.reddit.com{parsed.path.rstrip('/')}.json?raw_json=1&limit=50"
+    try:
+        response = _session.get(
+            json_url,
+            timeout=timeout,
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+                "Accept": "application/json",
+            },
+        )
+        if response.status_code in (403, 429):
+            raise FetchError(
+                ProcessingError.BLOCKED,
+                f"HTTP {response.status_code} (reddit blocked) for {url[:80]}",
+                http_status=response.status_code,
+            )
+        response.raise_for_status()
+        listing = response.json()
+        post = listing[0]["data"]["children"][0]["data"]
+        title = _clean_title(post["title"])
+        permalink = post["permalink"]
+        if not title or not isinstance(permalink, str) or not permalink.startswith("/"):
+            raise ValueError("Invalid Reddit post")
+        canonical = f"https://www.reddit.com{permalink}"
+        lines = ["Source: Reddit", f"URL: {canonical}"]
+        if post.get("author"):
+            lines.append(f"Author: u/{post['author']}")
+        if post.get("subreddit"):
+            lines.append(f"Subreddit: r/{post['subreddit']}")
+        if post.get("score") is not None:
+            lines.append(f"Score: {post['score']}")
+        lines.extend(["", "Title:", title])
+        if post.get("selftext"):
+            lines.extend(["", "Post:", post["selftext"].strip()])
+        if not post.get("is_self", bool(post.get("selftext"))) and post.get("url"):
+            lines.extend(["", f"Link: {post['url']}"])
+
+        comments = []
+        remaining = 12000
+        for child in listing[1]["data"]["children"]:
+            if child.get("kind") != "t1":
+                continue
+            comment = child["data"]
+            author, body = comment.get("author"), comment.get("body")
+            if not isinstance(author, str) or not isinstance(body, str):
+                continue
+            body = body.strip()
+            if (author.lower() in {"[deleted]", "[removed]"}
+                    or body.lower() in {"", "[deleted]", "[removed]"}
+                    or (author.lower() == "automoderator" and comment.get("stickied"))):
+                continue
+            prefix = f"u/{author}: "
+            if remaining <= len(prefix):
+                break
+            available = remaining - len(prefix)
+            if len(body) > available:
+                body = body[:available - 1].rstrip() + "…"
+            entry = prefix + body
+            comments.append(entry)
+            remaining -= len(entry) + 2
+            if len(comments) == 15 or remaining <= 0:
+                break
+        if comments:
+            lines.extend(["", "Top comments:", "\n\n".join(comments)])
+        return {"text": "\n".join(lines), "title": title, "canonical_url": canonical}
+    except FetchError:
+        raise
+    except (requests.RequestException, ValueError, TypeError, KeyError, IndexError, AttributeError):
+        pass
 
     old_url = f"https://old.reddit.com{parsed.path.rstrip('/')}/"
     try:
