@@ -15,3 +15,6 @@ failures.jsonl
 failures.jsonl.*
 failures.parked.jsonl
 junk_review.json
+
+# Junk-URL ledger — machine-written local state, same as failures.jsonl
+junk_urls.jsonl
