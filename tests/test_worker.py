@@ -145,3 +145,17 @@ def test_cli_and_plist(cfg, tmp_path, monkeypatch):
     assert observed[-1].engine.provider == "claude"
     monkeypatch.setattr(worker.time, "sleep", lambda seconds: (_ for _ in ()).throw(KeyboardInterrupt()))
     assert worker.main(["--watch"]) == 0
+
+
+def test_junk_job_is_terminal_without_ingest(cfg, tmp_path, monkeypatch):
+    from article_pipeline.junk_ledger import record_junk
+
+    monkeypatch.setenv("ARTICLE_PIPELINE_JUNK_LEDGER", str(tmp_path / "junk.jsonl"))
+    record_junk("https://example.com/article/", "junk")
+    def fail_ingest(*args, **kwargs):
+        raise AssertionError("ingest called")
+    monkeypatch.setattr(processor, "ingest_article", fail_ingest)
+    path = job_path(cfg, url="https://example.com/article?utm_source=test")
+    assert worker.drain_jobs(cfg, object()) == (0, 1)
+    job = json.loads(path.read_text())
+    assert job["status"] == "error" and job["reason"] == "not_found"

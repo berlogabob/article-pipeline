@@ -38,7 +38,8 @@ def test_real_articles_pass():
     assert junk_reason("Понимание ошибок 404 в веб-разработке", "https://habr.com/p/1") is None
 
 
-def test_process_article_records_a_404_page_as_not_found(tmp_path):
+def test_process_article_records_a_404_page_as_not_found(tmp_path, monkeypatch):
+    monkeypatch.setenv("ARTICLE_PIPELINE_JUNK_LEDGER", str(tmp_path / "junk.jsonl"))
     cfg = Config()
     cfg.output_format = "typst"
     cfg.typst.vault_dir = str(tmp_path / "vault")
@@ -66,6 +67,7 @@ def test_process_article_records_a_404_page_as_not_found(tmp_path):
 
     assert ok is False
     assert err is ProcessingError.NOT_FOUND
+    assert "https://erogol.com/gone" in (tmp_path / "junk.jsonl").read_text()
     assert not is_retryable(err), "a 404 page must not haunt the retry ledger"
     assert list(articles.iterdir()) == [], "an error page must leave no note behind"
 

@@ -11,6 +11,7 @@ from typing import List, Optional, Set, Tuple
 from .config import Config
 from .errors import ProcessingError
 from .images import download_images
+from .junk_ledger import is_junk_url, record_junk
 from .metadata import ArticleMetadata, normalize_tag
 from .net import get_unique_path, normalize_url
 from .stage1_ingest import ingest_article
@@ -143,6 +144,10 @@ def process_article(
     force_youtube_asr: bool = False,
     result_paths: Optional[List[Path]] = None,
 ) -> Tuple[bool, ProcessingError]:
+    if not force and is_junk_url(url):
+        logger.info("Junk URL recorded as not_found: %s", url[:80])
+        return False, ProcessingError.NOT_FOUND
+
     ingest, err = ingest_article(
         url,
         title,
@@ -162,6 +167,9 @@ def process_article(
     if not force:
         junk = junk_reason(resolved_title, final_url)
         if junk:
+            record_junk(url, junk)
+            if normalize_url(final_url) != normalize_url(url):
+                record_junk(final_url, junk)
             logger.info("Junk page (%s), recorded as not_found: %s", junk, final_url[:80])
             return False, ProcessingError.NOT_FOUND
 
