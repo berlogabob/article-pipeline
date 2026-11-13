@@ -100,6 +100,9 @@ def test_local_claim_lock(cfg):
 def test_studio_runtime_key_and_sanitized_errors(tmp_path, monkeypatch, caplog):
     settings = tmp_path / "models.json"
     monkeypatch.setattr(engine, "STUDIO_SETTINGS_PATH", settings)
+    monkeypatch.setattr(engine.Path, "home", lambda: tmp_path)
+    monkeypatch.delenv("TYLOG_LLM_KEY", raising=False)
+    monkeypatch.delenv("TYLOG_KEY_STUDIO", raising=False)
     seen = []
     def handler(request):
         seen.append(request.headers["Authorization"])

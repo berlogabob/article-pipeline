@@ -39,7 +39,7 @@ class LlmConfig(BaseModel):
 
 
 class OutputConfig(BaseModel):
-    max_filename_chars: int = 60
+    max_filename_chars: int = 80
 
 
 class FoldersConfig(BaseModel):

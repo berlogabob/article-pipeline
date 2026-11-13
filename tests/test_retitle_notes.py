@@ -81,7 +81,7 @@ def test_new_filename_collision_and_length(tmp_path):
     (tmp_path / "x.com - A title.typ").write_text("x", encoding="utf-8")
     assert new_filename(tmp_path, "x.com", "A title") == "x.com - A title (2).typ"
     long = new_filename(tmp_path, "verylongdomain.example.com", "T" * 80)
-    assert len(long) <= 60 + len(".typ")
+    assert len(long) <= 80 + len(".typ")
 
 
 def test_review_file_roundtrip(tmp_path):

@@ -24,6 +24,7 @@ from bs4 import BeautifulSoup
 from .errors import FetchError, ProcessingError
 from .net import normalize_url
 from .rate_limit import DomainRateLimiter, get_rate_limiter
+from .titles import choose_title
 
 logger = logging.getLogger("article_pipeline")
 
@@ -243,7 +244,10 @@ def fetch_and_extract(
     return extracted
 
 
-def extract_title_from_html(html: str) -> Optional[str]:
+def extract_title_from_html(html: str, url: str = "") -> Optional[str]:
+    chosen = choose_title(html, url)
+    if chosen:
+        return chosen
     try:
         metadata = trafilatura.extract_metadata(html)
         title = getattr(metadata, "title", None) if metadata else None
@@ -393,7 +397,7 @@ def _fetch_and_extract_article(
         return None
 
     text = extract_text_from_html(html, include_images=True)
-    title = extract_title_from_html(html)
+    title = extract_title_from_html(html, url)
     canonical_url = extract_canonical_url_from_html(html)
     if text is None:
         # Social hosts serve a JS shell whose og:description is only the

@@ -390,59 +390,48 @@ def expand_url(url: str, timeout: int = 10, max_redirects: int = 5) -> Optional[
 # Nextcloud-safe filenames
 # ---------------------------------------------------------------------------
 
-# Characters explicitly forbidden on common Nextcloud/Windows-backed storage.
-_FORBIDDEN_CHARS_RE = re.compile(r'[<>:"/\\|?*]')
-# Keep Unicode letters/digits (incl. Cyrillic), spaces, and - _ .
-# Everything else (emoji, pictographs, symbols, control chars, etc.) is stripped.
-_ALLOWED_CHAR_RE = re.compile(r"[^\w\s\-_.]", flags=re.UNICODE)
-_WHITESPACE_RE = re.compile(r"\s+")
+# Twin of TypstSeq/tool/vault_filenames.py clean_stem; keep these in sync.
+_HOST_PREFIX = re.compile(r"^([A-Za-z0-9][A-Za-z0-9.-]*\.[A-Za-z]{2,} - )(.*)$", re.S)
+_TRIM_END = " .-–—,;:"
 
 
-def safe_filename(name: str, max_chars: int = 60) -> str:
-    """Sanitize `name` into a Nextcloud-safe filename stem.
+def _emoji_or_control(c: str) -> bool:
+    n = ord(c)
+    return (0x2600 <= n <= 0x27BF or 0x2B00 <= n <= 0x2BFF or
+            0x1F000 <= n <= 0x1FAFF or 0x1F1E6 <= n <= 0x1F1FF or
+            0x1F3FB <= n <= 0x1F3FF or n == 0x200D or
+            0xFE00 <= n <= 0xFE0F or 0xE0100 <= n <= 0xE01EF or
+            n == 0x20E3 or 0xE0020 <= n <= 0xE007F or
+            unicodedata.category(c) == "Cc")
 
-    Keeps Unicode letters (including Cyrillic) and digits, spaces, and
-    ``- _ .``; strips everything else including emoji/symbols/pictographs
-    and the characters forbidden on common filesystems (``< > : " / \\ | ? *``).
-    Collapses whitespace runs, strips leading/trailing spaces and dots, and
-    truncates to `max_chars`, cutting at a word boundary when possible (no
-    ellipsis). Falls back to "Article" if the result is empty.
-    """
-    if not name:
-        return "Article"
 
-    # Normalize so combining marks / compatibility forms don't leak through.
+def _cut_stem(text: str, limit: int) -> str:
+    if limit <= 0:
+        return ""
+    if len(text) <= limit:
+        return text
+    text = text[:limit]
+    if " " in text:
+        text = text.rsplit(" ", 1)[0]
+    return text.rstrip(_TRIM_END)
+
+
+def safe_filename(name: str, max_chars: int = 80) -> str:
     text = unicodedata.normalize("NFC", name)
-    text = _FORBIDDEN_CHARS_RE.sub("", text)
-
-    # Strip anything that isn't a "word" char (\w already includes Unicode
-    # letters/digits/underscore under re.UNICODE), whitespace, hyphen, or dot.
-    # \w also matches underscore, which we want to keep anyway.
-    cleaned_chars = []
-    for ch in text:
-        if ch.isalnum() or ch in " -_.":
-            cleaned_chars.append(ch)
-        # else: drop (emoji, symbols, punctuation, control chars, etc.)
-    cleaned = "".join(cleaned_chars)
-
-    cleaned = _WHITESPACE_RE.sub(" ", cleaned).strip()
-    cleaned = cleaned.strip(" .")
-
-    if not cleaned:
-        return "Article"
-
-    if len(cleaned) > max_chars:
-        truncated = cleaned[:max_chars]
-        # Cut at a word boundary when possible.
-        last_space = truncated.rfind(" ")
-        if last_space > 0:
-            truncated = truncated[:last_space]
-        cleaned = truncated.strip(" .")
-
-    if not cleaned:
-        return "Article"
-
-    return cleaned
+    text = "".join(c for c in text if not _emoji_or_control(c) and c not in '\\/:*?"<>|')
+    text = re.sub(r"\s+", " ", text).strip(" .")
+    text = re.sub(r"^([A-Za-z0-9][A-Za-z0-9.-]*\.[A-Za-z]{2,}) -$", r"\1", text)
+    match = _HOST_PREFIX.match(text)
+    if match:
+        prefix, rest = match.groups()
+        rest = _cut_stem(rest, max(0, max_chars - len(prefix)))
+        text = prefix + rest if rest else prefix.removesuffix(" - ")
+    else:
+        text = _cut_stem(text, max_chars)
+    text = text.strip(" .") or "Untitled"
+    if len(text) > max_chars and max_chars > 0:
+        text = _cut_stem(text, max_chars).strip(" .") or "Untitled"
+    return text
 
 
 def get_unique_path(
@@ -450,15 +439,16 @@ def get_unique_path(
     folder: Path,
     source: str = "",
     ext: str = ".md",
-    max_chars: int = 60,
+    max_chars: int = 80,
 ) -> Path:
     source = source.strip() if source else ""
     formatted = f"{source} - {title}" if source else title
     stem = safe_filename(formatted, max_chars=max_chars)
-
     path = folder / f"{stem}{ext}"
-    counter = 1
+    counter = 2
     while path.exists():
-        path = folder / f"{stem} ({counter}){ext}"
+        suffix = f" {counter}"
+        base = _cut_stem(stem, max_chars - len(suffix)).rstrip(_TRIM_END)
+        path = folder / f"{base}{suffix}{ext}"
         counter += 1
     return path

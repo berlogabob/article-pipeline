@@ -19,6 +19,7 @@ from .stage3_render_markdown import build_content
 from .stage3_render_typst import note_id, render_typst_note
 from .tag_scan import parse_header, VaultNote, find_related, scan_vault, vocabulary
 from .youtube import YouTubePlaylistVideo
+from .titles import final_title
 
 logger = logging.getLogger("article_pipeline")
 
@@ -209,6 +210,11 @@ def process_article(
         # No note: a stub that looks processed would be skipped by dedup
         # forever, so the link would be silently lost rather than retried.
         return False, ProcessingError.LLM_ERROR
+
+    resolved_title = final_title(
+        ingest["resolved_title"], title, final_url, metadata.summary_ru,
+        ingest["extracted_text"], engine, cfg,
+    )
 
     if cfg.output_format == "typst":
         image_map = {}

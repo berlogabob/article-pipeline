@@ -195,7 +195,7 @@ def test_process_article_falls_back_to_host_when_title_empty(tmp_path):
     assert ok and err.value == "unknown"
     content = next(tmp_path.rglob("*.typ")).read_text(encoding="utf-8")
     assert 'title: ""' not in content
-    assert "\n= youtube.com\n" in content
+    assert "\n= Summary\n" in content
 
 
 def test_ingest_article_uses_html_path_for_youtube_channel_urls():
@@ -506,3 +506,34 @@ def test_process_article_creates_typst_child_notes_linked_to_parent(tmp_path):
     assert '"url": "https://www.youtube.com/watch?v=CKRgUveNZx8"' in content
     assert "== Related" in content
     assert f'#tylog.ref-note("{parent_id_match}")' in content
+
+
+def test_generic_ingest_title_uses_llm_and_preserves_typst_contract(tmp_path):
+    from article_pipeline.stage3_render_typst import render_typst_note
+
+    metadata = ArticleMetadata(summary_ru='Краткое содержание статьи', tags=['tag'], author=None, verification_notes='OK')
+    cfg = Config()
+    cfg.output_format = 'typst'
+    cfg.typst.vault_dir = str(tmp_path)
+    cfg.typst.related_articles.enabled = False
+    url = 'https://youtube.com/watch?v=dQw4w9WgXcQ'
+    ingest = {'expanded_url': url, 'normalized_url': normalize_url(url),
+              'resolved_title': 'youtube.com', 'extracted_text': _BODY_PAD,
+              'image_urls': [], 'is_youtube': True, 'source': 'youtube.com', 'canonical_url': ''}
+    class Engine:
+        def chat_json(self, prompt, model, temperature):
+            return 'Here is the title: {"title": "Music, memory and culture"}'
+
+    with patch('article_pipeline.processor.ingest_article', return_value=(ingest, None)), patch(
+        'article_pipeline.processor.summarize', return_value=metadata
+    ):
+        ok, _ = process_article(url, 'dQw4w9WgXcQ', cfg, Engine(), force=True)
+    assert ok
+    path = tmp_path / 'articles' / 'youtube.com - Music, memory and culture.typ'
+    content = path.read_text(encoding='utf-8')
+    _, expected = render_typst_note(title='Music, memory and culture', url=url, metadata=metadata,
+        body_markdown=_BODY_PAD, source='youtube.com', image_map={}, related=[],
+        llm_provider='', llm_model='', is_youtube=True, metadata_only=False)
+    assert content == expected
+    assert '  title: "Music, memory and culture",\n' in content
+    assert '\n= Music, memory and culture\n' in content

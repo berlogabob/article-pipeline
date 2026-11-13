@@ -198,15 +198,15 @@ def test_safe_filename_strips_trailing_dots_and_spaces():
     assert safe_filename("Draft Title...   ") == "Draft Title"
 
 
-def test_safe_filename_empty_result_falls_back_to_article():
-    assert safe_filename("🔥🔥🔥") == "Article"
-    assert safe_filename("") == "Article"
-    assert safe_filename("???") == "Article"
+def test_safe_filename_empty_result_falls_back_to_untitled():
+    assert safe_filename("🔥🔥🔥") == "Untitled"
+    assert safe_filename("") == "Untitled"
+    assert safe_filename("???") == "Untitled"
 
 
-def test_safe_filename_default_max_chars_is_60():
+def test_safe_filename_default_max_chars_is_80():
     result = safe_filename("a" * 100)
-    assert len(result) <= 60
+    assert len(result) == 80
 
 
 # ---------------------------------------------------------------------------
@@ -226,13 +226,23 @@ def test_get_unique_path_with_source_prefix(tmp_path):
 
 def test_get_unique_path_collision_suffixing(tmp_path):
     (tmp_path / "My Title.md").write_text("x")
-    (tmp_path / "My Title (1).md").write_text("x")
+    (tmp_path / "My Title 2.md").write_text("x")
 
     path = get_unique_path("My Title", tmp_path)
 
-    assert path == tmp_path / "My Title (2).md"
+    assert path == tmp_path / "My Title 3.md"
 
 
 def test_get_unique_path_custom_extension(tmp_path):
     path = get_unique_path("My Title", tmp_path, ext=".typ")
     assert path == tmp_path / "My Title.typ"
+
+
+def test_filename_punctuation_prefix_and_collision_limit(tmp_path):
+    assert safe_filename('example.com - Café, (тест)! 🚀') == 'example.com - Café, (тест)!'
+    title = 'word ' * 30
+    stem = safe_filename('example.com - ' + title)
+    assert stem.startswith('example.com - ') and len(stem) <= 80
+    (tmp_path / (stem + '.typ')).touch()
+    path = get_unique_path(title, tmp_path, source='example.com', ext='.typ')
+    assert path.stem.endswith(' 2') and len(path.stem) <= 80
