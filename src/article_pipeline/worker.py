@@ -5,6 +5,7 @@ import fcntl
 import json
 import os
 import plistlib
+import re
 import shutil
 import tempfile
 import time
@@ -30,6 +31,14 @@ def write_job(path: Path, job: dict) -> None:
         os.replace(name, path)
     finally:
         Path(name).unlink(missing_ok=True)
+
+
+def _safe_fetch_message(message: str) -> str:
+    message = re.sub(r"(?im)(cookie|set-cookie|authorization)\s*:\s*[^\r\n]*", r"\1: [redacted]", message)
+    message = re.sub(r"(?i)(token|api[_-]?key|access[_-]?key)\s*[:=]\s*[^\s,;]+", r"\1=[redacted]", message)
+    message = re.sub(r"(?i)\bBearer\s+[^\s,;]+", "Bearer [redacted]", message)
+    message = re.sub(r"https?://[^\s]+", lambda m: re.sub(r"[?#].*", "", m.group()), message)
+    return " ".join(message.split())[:200]
 
 
 def drain_jobs(cfg: Config, engine=None, connection_id: str = "studio") -> tuple[int, int]:
@@ -58,6 +67,8 @@ def drain_jobs(cfg: Config, engine=None, connection_id: str = "studio") -> tuple
                 continue
             job.update(status="processing")
             job.pop("reason", None)
+            job.pop("http_status", None)
+            job.pop("message", None)
             job.pop("note_path", None)
             write_job(path, job)
             try:
@@ -71,12 +82,18 @@ def drain_jobs(cfg: Config, engine=None, connection_id: str = "studio") -> tuple
                 if engine is None:
                     engine = make_engine(cfg, connection_id=connection_id)
                 paths = []
-                ok, err = process_article(url, title, cfg, engine, result_paths=paths)
+                fetch_details = {}
+                ok, err = process_article(url, title, cfg, engine, result_paths=paths,
+                                          fetch_details=fetch_details)
                 if ok and paths:
                     job.update(status="done", note_path=paths[0].relative_to(vault).as_posix())
                     done += 1
                 else:
                     job.update(status="error", reason=err.value if not ok else "note_path_missing")
+                    if not ok and fetch_details.get("message") is not None:
+                        if fetch_details.get("http_status") is not None:
+                            job["http_status"] = fetch_details["http_status"]
+                        job["message"] = _safe_fetch_message(fetch_details["message"])
                     errors += 1
             except Exception as exc:
                 # Do not persist arbitrary exception text (may contain credentials).

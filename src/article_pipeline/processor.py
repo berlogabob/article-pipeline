@@ -143,6 +143,7 @@ def process_article(
     force: bool = False,
     force_youtube_asr: bool = False,
     result_paths: Optional[List[Path]] = None,
+    fetch_details: Optional[dict] = None,
 ) -> Tuple[bool, ProcessingError]:
     if not force and is_junk_url(url):
         logger.info("Junk URL recorded as not_found: %s", url[:80])
@@ -153,6 +154,7 @@ def process_article(
         title,
         min_length=cfg.content.min_length,
         force_youtube_asr=force_youtube_asr,
+        fetch_details=fetch_details,
     )
     if ingest is None:
         return False, err

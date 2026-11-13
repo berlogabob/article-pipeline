@@ -7,7 +7,7 @@ import pytest
 
 from article_pipeline import engine, processor, worker
 from article_pipeline.config import Config, EngineConfig
-from article_pipeline.errors import ProcessingError
+from article_pipeline.errors import FetchError, ProcessingError
 
 
 @pytest.fixture
@@ -55,6 +55,7 @@ def test_real_stages_fallback_and_retry_dedup(cfg):
     assert worker.drain_jobs(cfg, llm) == (1, 0)
     job = json.loads(path.read_text())
     assert job["status"] == "done" and job["shared_at"] == "2026-10-05"
+    assert "http_status" not in job and "message" not in job
     note = worker.Path(cfg.typst.vault_dir) / job["note_path"]
     assert note.suffix == ".typ"
     content = note.read_text()
@@ -75,7 +76,8 @@ def test_llm_failure_no_note_and_explicit_retry(cfg):
     assert json.loads(path.read_text())["reason"] == "llm_error"
     assert not list(worker.Path(cfg.typst.vault_dir).rglob("*.typ"))
     assert worker.drain_jobs(cfg, FakeLLM(path)) == (0, 0)
-    worker.write_job(path, {**json.loads(path.read_text()), "status": "queued"})
+    worker.write_job(path, {**json.loads(path.read_text()), "status": "queued",
+                            "http_status": 403, "message": "stale fetch detail"})
     assert worker.drain_jobs(cfg, FakeLLM(path)) == (1, 0)
     assert "reason" not in json.loads(path.read_text())
 
@@ -159,3 +161,30 @@ def test_junk_job_is_terminal_without_ingest(cfg, tmp_path, monkeypatch):
     assert worker.drain_jobs(cfg, object()) == (0, 1)
     job = json.loads(path.read_text())
     assert job["status"] == "error" and job["reason"] == "not_found"
+
+
+@pytest.mark.parametrize("status,message", [
+    (403, "HTTP 403 denied\nAuthorization: Bearer topsecret; token=abc123; Cookie: sid=secret; https://example.com/a?key=private"),
+    (None, "temporary fetch failure"),
+])
+def test_fetch_error_details_are_sanitized_and_http_status_is_optional(cfg, monkeypatch, status, message):
+    path = job_path(cfg)
+    def fail_fetch(*args, **kwargs):
+        error = FetchError(ProcessingError.BLOCKED if status else ProcessingError.NETWORK_ERROR,
+                           message, http_status=status)
+        kwargs["fetch_details"].update(http_status=error.http_status, message=str(error))
+        return None, error.error
+    monkeypatch.setattr(processor, "ingest_article", fail_fetch)
+    assert worker.drain_jobs(cfg, object()) == (0, 1)
+    job = json.loads(path.read_text())
+    assert job["status"] == "error"
+    assert job["reason"] == ("blocked" if status else "network_error")
+    if status:
+        assert job["http_status"] == status
+    else:
+        assert "http_status" not in job
+    assert len(job["message"]) <= 200
+    if status:
+        assert all(secret not in job["message"] for secret in ("topsecret", "abc123", "sid=secret", "private"))
+    else:
+        assert job["message"] == "temporary fetch failure"

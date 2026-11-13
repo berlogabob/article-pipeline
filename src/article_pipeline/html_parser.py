@@ -134,7 +134,8 @@ def fetch_html(
             # Reaching here with a 429 means the ladder above is spent.
             if response.status_code == 429:
                 raise FetchError(
-                    ProcessingError.BLOCKED, f"HTTP 429 (rate limited) for {url[:80]}"
+                    ProcessingError.BLOCKED, f"HTTP 429 (rate limited) for {url[:80]}",
+                    http_status=429,
                 )
             if response.status_code in _DEFINITIVE_STATUS:
                 # Say what actually happened. Reported as parse_error these
@@ -143,6 +144,7 @@ def fetch_html(
                 raise FetchError(
                     _DEFINITIVE_STATUS[response.status_code],
                     f"HTTP {response.status_code} for {url[:80]}",
+                    http_status=response.status_code,
                 )
             response.raise_for_status()
             ctype = response.headers.get("content-type", "")

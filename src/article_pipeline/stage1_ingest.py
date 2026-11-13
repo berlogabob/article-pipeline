@@ -40,6 +40,7 @@ def ingest_article(
     title: str,
     min_length: int = 100,
     force_youtube_asr: bool = False,
+    fetch_details: Optional[dict] = None,
 ) -> Tuple[Optional[IngestResult], ProcessingError]:
     expanded = expand_url(url) or url
     if not validate_url(expanded):
@@ -137,6 +138,8 @@ def ingest_article(
         # The server gave a definitive answer; it already knows which outcome
         # this is, so don't guess at it below.
         logger.error("Fetch refused for %s: %s", final_url[:80], e)
+        if fetch_details is not None:
+            fetch_details.update(http_status=e.http_status, message=str(e))
         return None, e.error
     except Exception as e:
         logger.error("Network error for %s: %s", final_url[:80], e)

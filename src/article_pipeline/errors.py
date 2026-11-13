@@ -44,9 +44,10 @@ class FetchError(Exception):
     tell "the site refused us" from "we got the page and it was empty".
     """
 
-    def __init__(self, error: "ProcessingError", message: str):
+    def __init__(self, error: "ProcessingError", message: str, http_status: int | None = None):
         super().__init__(message)
         self.error = error
+        self.http_status = http_status
 
 
 def validate_url(url: str) -> bool:

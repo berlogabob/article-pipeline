@@ -88,6 +88,19 @@ def test_a_refused_fetch_reaches_the_caller_with_its_own_error():
     assert err is ProcessingError.BLOCKED, "must not be flattened to network_error"
 
 
+def test_fetch_error_details_reach_optional_ingest_out_parameter():
+    details = {}
+    with patch(
+        "article_pipeline.stage1_ingest.expand_url", side_effect=lambda u: u
+    ), patch(
+        "article_pipeline.stage1_ingest.fetch_and_extract_article",
+        side_effect=FetchError(ProcessingError.BLOCKED, "HTTP 403 denied", http_status=403),
+    ):
+        ingest, err = ingest_article("https://example.com/a", "t", fetch_details=details)
+    assert ingest is None and err is ProcessingError.BLOCKED
+    assert details == {"http_status": 403, "message": "HTTP 403 denied"}
+
+
 def test_retryable_split_is_what_a_retry_pass_relies_on():
     assert is_retryable(ProcessingError.TIMEOUT)
     assert is_retryable(ProcessingError.PARSE_ERROR)
